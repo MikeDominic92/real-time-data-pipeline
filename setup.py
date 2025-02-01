@@ -10,6 +10,10 @@ setup(
         "google-cloud-bigquery>=3.11.4",
         "apache-beam[gcp]>=2.50.0",
         "google-cloud-storage>=2.13.0",
+        "pyyaml>=6.0.1",
+        "requests>=2.31.0",
+        "pandas>=2.1.4",
+        "numpy>=1.24.3",
     ],
     extras_require={
         "dev": [
@@ -18,11 +22,19 @@ setup(
             "isort>=5.13.2",
             "flake8>=6.1.0",
             "mypy>=1.7.1",
+            "bandit>=1.7.6",
+            "safety>=2.3.5",
         ],
         "test": [
             "pytest>=7.4.3",
             "pytest-cov>=4.1.0",
             "pytest-mock>=3.12.0",
+        ],
+        "perf": [
+            "matplotlib>=3.8.2",
+            "seaborn>=0.13.1",
+            "scipy>=1.11.4",
+            "psutil>=5.9.7",
         ],
     },
     python_requires=">=3.9",
