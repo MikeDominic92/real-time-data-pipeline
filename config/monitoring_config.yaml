@@ -1,0 +1,171 @@
+# Monitoring Configuration
+
+# Logging Configuration
+logging:
+  level: INFO
+  use_cloud_logging: true
+  log_file: logs/pipeline.log
+  structured_logging: true
+
+# Metrics Configuration
+metrics:
+  # Metric prefix for Cloud Monitoring
+  prefix: custom.googleapis.com/rtdp
+
+  # Default labels for all metrics
+  default_labels:
+    environment: production
+    service: real-time-pipeline
+
+  # Metric definitions
+  definitions:
+    # Message processing metrics
+    messages_received:
+      type: counter
+      description: "Number of messages received from Pub/Sub"
+    messages_processed:
+      type: counter
+      description: "Number of messages successfully processed"
+    messages_failed:
+      type: counter
+      description: "Number of messages that failed processing"
+    
+    # Latency metrics
+    processing_latency:
+      type: gauge
+      description: "Message processing latency in seconds"
+    end_to_end_latency:
+      type: gauge
+      description: "End-to-end pipeline latency in seconds"
+    
+    # Batch metrics
+    batch_size:
+      type: gauge
+      description: "Size of message batches"
+    batch_processing_time:
+      type: gauge
+      description: "Time taken to process each batch"
+
+    # Error metrics
+    parsing_errors:
+      type: counter
+      description: "Number of message parsing errors"
+    validation_errors:
+      type: counter
+      description: "Number of message validation errors"
+    processing_errors:
+      type: counter
+      description: "Number of message processing errors"
+    storage_errors:
+      type: counter
+      description: "Number of storage operation errors"
+
+    # System metrics
+    cpu_usage:
+      type: gauge
+      description: "CPU usage percentage"
+    memory_usage:
+      type: gauge
+      description: "Memory usage percentage"
+    disk_usage:
+      type: gauge
+      description: "Disk usage percentage"
+
+# Alert Configuration
+alerts:
+  # Latency alerts
+  processing_latency:
+    threshold_seconds: 5.0
+    duration_seconds: 300
+    description: "Processing latency exceeds 5 seconds"
+    
+  end_to_end_latency:
+    threshold_seconds: 10.0
+    duration_seconds: 300
+    description: "End-to-end latency exceeds 10 seconds"
+
+  # Error rate alerts
+  error_rate:
+    threshold_rate: 0.01  # 1%
+    duration_seconds: 300
+    description: "Error rate exceeds 1%"
+
+  # Throughput alerts
+  low_throughput:
+    min_messages: 100
+    duration_seconds: 300
+    description: "Message throughput falls below 100 messages per minute"
+
+  # System alerts
+  high_cpu_usage:
+    threshold_percentage: 80
+    duration_seconds: 300
+    description: "CPU usage exceeds 80%"
+    
+  high_memory_usage:
+    threshold_percentage: 80
+    duration_seconds: 300
+    description: "Memory usage exceeds 80%"
+    
+  high_disk_usage:
+    threshold_percentage: 80
+    duration_seconds: 300
+    description: "Disk usage exceeds 80%"
+
+# Dashboard Configuration
+dashboards:
+  # Overview dashboard
+  overview:
+    title: "Pipeline Overview"
+    refresh_interval: 60  # seconds
+    widgets:
+      - title: "Message Processing Rate"
+        type: line
+        metrics:
+          - messages_received
+          - messages_processed
+          - messages_failed
+      
+      - title: "Processing Latency"
+        type: line
+        metrics:
+          - processing_latency
+          - end_to_end_latency
+      
+      - title: "Error Rates"
+        type: line
+        metrics:
+          - parsing_errors
+          - validation_errors
+          - processing_errors
+          - storage_errors
+      
+      - title: "System Resources"
+        type: gauge
+        metrics:
+          - cpu_usage
+          - memory_usage
+          - disk_usage
+
+# Notification Channels
+notification_channels:
+  - type: email
+    name: "Pipeline Alerts"
+    email_address: "alerts@example.com"
+  
+  - type: slack
+    name: "Pipeline Alerts"
+    webhook_url: "https://hooks.slack.com/services/xxx/yyy/zzz"
+
+# Monitoring Export Configuration
+export:
+  # BigQuery export
+  bigquery:
+    dataset_id: monitoring_data
+    table_id: pipeline_metrics
+    export_interval: 300  # seconds
+
+  # Cloud Storage export
+  storage:
+    bucket_name: pipeline-monitoring-exports
+    export_interval: 3600  # seconds
