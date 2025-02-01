@@ -1,0 +1,47 @@
+# GCP Project Settings
+project_id: "your-project-id"
+region: "us-central1"
+
+# Pub/Sub Settings
+topic_id: "raw-data-topic"
+subscription_id: "data-processing-sub"
+
+# BigQuery Settings
+dataset_id: "real_time_data"
+table_id: "processed_events"
+
+# Schema Definition
+schema:
+  - name: "event_id"
+    type: "STRING"
+    mode: "REQUIRED"
+    description: "Unique identifier for the event"
+  
+  - name: "timestamp"
+    type: "TIMESTAMP"
+    mode: "REQUIRED"
+    description: "Event timestamp"
+  
+  - name: "data"
+    type: "STRING"
+    mode: "REQUIRED"
+    description: "Event payload data"
+  
+  - name: "processing_timestamp"
+    type: "TIMESTAMP"
+    mode: "REQUIRED"
+    description: "Time when the event was processed"
+
+# Pipeline Settings
+batch_size: 100
+streaming: true
+
+# Performance Settings
+num_workers: 4
+max_batch_bytes: 1048576  # 1MB
+max_batch_count: 1000
+
+# Monitoring Settings
+enable_monitoring: true
+stackdriver_logging: true
+error_reporting: true
