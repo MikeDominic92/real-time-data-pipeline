@@ -49,6 +49,13 @@ def mock_pubsub_message(sample_message_data: Dict[str, Any]) -> Message:
 @pytest.fixture
 def test_config() -> PipelineConfig:
     """Test configuration."""
+    from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
+    
+    # Create pipeline options for testing
+    pipeline_options = PipelineOptions()
+    standard_options = pipeline_options.view_as(StandardOptions)
+    standard_options.streaming = True
+    
     return PipelineConfig(
         project_id="test-project",
         region="us-central1",
@@ -57,7 +64,8 @@ def test_config() -> PipelineConfig:
         dataset_id="test_dataset",
         table_id="test_table",
         batch_size=10,
-        streaming=True
+        streaming=True,
+        pipeline_options=pipeline_options
     )
 
 
@@ -76,15 +84,28 @@ def mock_publisher_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, Non
             self,
             topic: str,
             data: bytes,
-            **kwargs: Any
+            ordering_key: str = None,
+            **attrs: str
         ) -> str:
-            """Mock publish method."""
-            self.published_messages.append({
+            """Mock publish method.
+            
+            Args:
+                topic: Topic to publish to.
+                data: Message data.
+                ordering_key: Optional ordering key.
+                **attrs: Additional attributes.
+            
+            Returns:
+                Message ID.
+            """
+            message = {
                 "topic": topic,
                 "data": data,
-                "attributes": kwargs
-            })
-            return "message-id"
+                "ordering_key": ordering_key,
+                "attributes": attrs
+            }
+            self.published_messages.append(message)
+            return "test-message-id"
 
     client = MockPublisherClient()
     monkeypatch.setattr(pubsub_v1, "PublisherClient", lambda: client)
