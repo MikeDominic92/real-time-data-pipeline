@@ -54,8 +54,9 @@ class PipelineDeployer:
         Returns:
             Configuration dictionary
         """
-        with open(config_path, 'r') as f:
-            return yaml.safe_load(f)
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+        return config["environments"]  # Access the environments section
 
     def _upload_package(self) -> str:
         """Upload package to Cloud Storage.
