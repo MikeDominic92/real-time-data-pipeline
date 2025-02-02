@@ -7,7 +7,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import yaml
-from google.cloud.dataflow_v1beta3 import JobsV1Beta3Client
+from google.cloud import dataflow_v1beta3
 from google.cloud import storage
 
 
@@ -35,7 +35,7 @@ class PipelineDeployer:
         self.config = self._load_config(config_path)[environment]
         
         # Initialize clients
-        self.dataflow_client = JobsV1Beta3Client()
+        self.dataflow_client = dataflow_v1beta3.JobsV1Beta3Client()
         self.storage_client = storage.Client(project=project_id)
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
