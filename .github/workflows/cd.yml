@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install -r requirements.txt google-cloud-dataflow
+        pip install -r requirements.txt google-cloud-dataflow==2.46.0
 
     - name: Set up GCP credentials
       uses: google-github-actions/auth@v1
