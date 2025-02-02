@@ -10,9 +10,6 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from google.cloud import storage
 import argparse
-import subprocess
-import time
-
 
 class PipelineDeployer:
     """Deploy the Real-Time Data Pipeline to GCP."""
@@ -35,7 +32,7 @@ class PipelineDeployer:
         self.project_id = project_id
         self.environment = environment
         self.version = version
-        self.config = self._load_config(config_path)[environment]
+        self.config = self._load_config(config_path)["environments"][environment]
         
         # Initialize clients
         self.pipeline_options = PipelineOptions(
@@ -56,7 +53,7 @@ class PipelineDeployer:
         """
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
-        return config["environments"]  # Access the environments section
+        return config
 
     def _upload_package(self) -> str:
         """Upload package to Cloud Storage.
@@ -98,113 +95,53 @@ class PipelineDeployer:
         Returns:
             Job ID
         """
-        location_path = f"projects/{self.project_id}/locations/{self.config['region']}"
-        
-        job = {
-            "name": job_name,
-            "parameters": {
-                "project": self.project_id,
-                "region": self.config["region"],
-                "temp_location": f"gs://{self.project_id}-dataflow-temp",
-                "setup_file": "./setup.py",
-                "requirements_file": "requirements.txt",
-                "streaming": True,
-                "runner": "DataflowRunner",
-                "max_num_workers": self.config["max_workers"],
-                "autoscaling_algorithm": "THROUGHPUT_BASED",
-                "experiments": [
-                    "use_runner_v2",
-                    "enable_streaming_engine"
-                ]
-            },
-            "environment": {
-                "service_account_email": self.config["service_account"],
-                "worker_zone": self.config["zone"],
-                "temp_location": f"gs://{self.project_id}-dataflow-temp",
-                "network": self.config["network"],
-                "subnetwork": self.config["subnetwork"],
-                "machine_type": self.config["machine_type"],
-                "additional_experiments": [
-                    "use_runner_v2",
-                    "enable_streaming_engine"
-                ],
-                "enable_streaming_engine": True
-            }
+        # Create pipeline options
+        options = {
+            "project": self.project_id,
+            "region": self.config["region"],
+            "temp_location": f"gs://{self.project_id}-dataflow-temp",
+            "setup_file": "./setup.py",
+            "requirements_file": "requirements.txt",
+            "streaming": True,
+            "runner": "DataflowRunner",
+            "max_num_workers": self.config.get("max_workers", 10),
+            "autoscaling_algorithm": "THROUGHPUT_BASED",
+            "experiments": [
+                "use_runner_v2",
+                "enable_streaming_engine"
+            ]
         }
 
-        request = beam.PipelineOptions(
-            project=self.project_id,
-            gcs_path=package_path,
-            location=self.config["region"],
-            launch_parameters=job
-        )
-
-        response = beam.Pipeline(request=request)
-        return response.job.id
-
-    def _wait_for_job(self, job_id: str, timeout: int = 300) -> None:
-        """Wait for Dataflow job to be ready.
-        
-        Args:
-            job_id: Job ID to wait for
-            timeout: Timeout in seconds
-        """
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            job = self.pipeline_options.get_job(
-                project_id=self.project_id,
-                location=self.config["region"],
-                job_id=job_id
-            )
-            
-            if job.current_state == "JOB_STATE_RUNNING":
-                return
-            elif job.current_state in ["JOB_STATE_FAILED", "JOB_STATE_CANCELLED"]:
-                raise Exception(f"Job failed with state: {job.current_state}")
-            
-            time.sleep(10)
-        
-        raise TimeoutError("Job did not reach running state within timeout")
+        # Create and launch pipeline
+        pipeline = beam.Pipeline(options=PipelineOptions(**options))
+        result = pipeline.run()
+        return result.job_id()
 
     def deploy(self) -> None:
         """Deploy the pipeline."""
-        print(f"Deploying to {self.environment}...")
-
+        print("Starting deployment...")
+        
         # Upload package
         package_path = self._upload_package()
         print(f"Uploaded package to {package_path}")
-
+        
         # Launch job
         job_name = f"rtdp-{self.environment}-{self.version}"
         job_id = self._launch_dataflow_job(package_path, job_name)
-        print(f"Launched Dataflow job {job_id}")
-
-        # Wait for job to be ready
-        self._wait_for_job(job_id)
-        print("Deployment completed successfully!")
+        print(f"Launched job with ID: {job_id}")
 
 
 def main() -> None:
     """Main function."""
-    parser = argparse.ArgumentParser(
-        description="Deploy Real-Time Data Pipeline"
-    )
-    parser.add_argument(
-        "--project-id",
-        required=True,
-        help="GCP project ID"
-    )
+    parser = argparse.ArgumentParser(description="Deploy Real-Time Data Pipeline")
+    parser.add_argument("--project-id", required=True, help="GCP project ID")
     parser.add_argument(
         "--environment",
         choices=["staging", "production"],
         required=True,
         help="Deployment environment"
     )
-    parser.add_argument(
-        "--version",
-        required=True,
-        help="Deployment version"
-    )
+    parser.add_argument("--version", required=True, help="Deployment version")
     parser.add_argument(
         "--config",
         default="config/deployment_config.yaml",
