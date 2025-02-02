@@ -5,12 +5,13 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import yaml
+# Think of this like telling your friend where to find the LEGO piece
+from google.cloud import dataflow_v1beta3 as dataflow
+from google.cloud import storage
 import argparse
 import subprocess
 import time
-import yaml
-from google.cloud import dataflow_v1beta3 as dataflow
-from google.cloud import storage
 
 
 class PipelineDeployer:
