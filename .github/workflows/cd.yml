@@ -33,7 +33,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip==25.0
         pip install -r requirements.txt google-cloud-dataflow
 
     - name: Set up GCP credentials
