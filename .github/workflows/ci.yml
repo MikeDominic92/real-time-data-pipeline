@@ -44,7 +44,16 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests/unit --cov=src --cov-report=xml
+        python -m pytest tests/unit -v --cov=src --cov-report=xml
+
+    - name: Debug test environment
+      if: failure()
+      run: |
+        python --version
+        pip list
+        pytest --version
+        ls -la tests/unit/
+        cat tests/unit/test_pipeline.py
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v3
