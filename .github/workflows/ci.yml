@@ -23,9 +23,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: pip-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          pip-${{ runner.os }}-
 
     - name: Install dependencies
       run: |
@@ -34,16 +34,9 @@ jobs:
 
     - name: Run linting
       run: |
-        # Run flake8
         flake8 src tests --max-line-length=100 --extend-ignore=E203
-
-        # Run black
         black --check src tests
-
-        # Run isort
         isort --check-only src tests
-
-        # Run mypy
         mypy src --ignore-missing-imports
 
     - name: Run tests
