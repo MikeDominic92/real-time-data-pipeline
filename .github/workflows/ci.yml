@@ -54,6 +54,12 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: true
 
+    - name: Security scan
+      run: |
+        pip install safety bandit
+        safety check --ignore=51457
+        bandit -r src/ -x tests/
+
   integration-test:
     needs: test
     runs-on: ubuntu-latest
