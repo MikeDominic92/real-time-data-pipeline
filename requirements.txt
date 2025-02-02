@@ -5,6 +5,7 @@ google-cloud-bigquery==3.5.0
 google-cloud-storage==2.10.0
 pytest==7.4.0
 pyyaml==6.0.1
+google-cloud-dataflow-client==0.32.0  # Official client library
 
 # Development dependencies
 flake8==6.1.0
@@ -15,4 +16,4 @@ mypy==1.8.0
 # Additional dependencies
 requests==2.31.0
 pandas==2.1.4
-numpy==1.24.3  # Updated to be compatible with apache-beam
+numpy==1.24.3  # Apache-beam compatible
