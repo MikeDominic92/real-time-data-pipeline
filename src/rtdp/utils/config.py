@@ -24,12 +24,67 @@ class PipelineConfig:
     # BigQuery settings
     dataset_id: str
     table_id: str
-    schema: Optional[list[bigquery.SchemaField]] = None
-
-    # Pipeline settings
     batch_size: int = 100
     streaming: bool = True
-    pipeline_options: PipelineOptions = field(default_factory=lambda: PipelineOptions())
+    pipeline_options: Optional[PipelineOptions] = None
+    schema: Optional[list[bigquery.SchemaField]] = None
+
+    def __init__(
+        self,
+        project_id: str,
+        region: str,
+        topic_id: str,
+        subscription_id: str,
+        dataset_id: str,
+        table_id: str,
+        batch_size: int = 100,
+        streaming: bool = True,
+        pipeline_options: Optional[PipelineOptions] = None,
+        schema: Optional[list[bigquery.SchemaField]] = None,
+    ) -> None:
+        """Initialize pipeline configuration.
+
+        Args:
+            project_id: GCP project ID.
+            region: GCP region.
+            topic_id: Pub/Sub topic ID.
+            subscription_id: Pub/Sub subscription ID.
+            dataset_id: BigQuery dataset ID.
+            table_id: BigQuery table ID.
+            batch_size: Number of messages to process in each batch.
+            streaming: Whether to run in streaming mode.
+            pipeline_options: Apache Beam pipeline options.
+            schema: BigQuery table schema.
+        """
+        self.project_id = project_id
+        self.region = region
+        self.topic_id = topic_id
+        self.subscription_id = subscription_id
+        self.dataset_id = dataset_id
+        self.table_id = table_id
+        self.batch_size = batch_size
+        self.streaming = streaming
+        self.pipeline_options = pipeline_options or PipelineOptions()
+        if self.streaming:
+            self.pipeline_options.view_as(PipelineOptions).streaming = True
+        
+        # Set up default schema if none provided
+        if schema is None:
+            self.schema = [
+                bigquery.SchemaField("event_id", "STRING", mode="REQUIRED"),
+                bigquery.SchemaField("timestamp", "TIMESTAMP", mode="REQUIRED"),
+                bigquery.SchemaField("processing_timestamp", "TIMESTAMP", mode="REQUIRED"),
+                bigquery.SchemaField("data", "RECORD", mode="REQUIRED", fields=[
+                    bigquery.SchemaField("key1", "STRING", mode="NULLABLE"),
+                    bigquery.SchemaField("key2", "STRING", mode="NULLABLE"),
+                ]),
+                bigquery.SchemaField("metadata", "RECORD", mode="REQUIRED", fields=[
+                    bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
+                    bigquery.SchemaField("version", "STRING", mode="REQUIRED"),
+                ]),
+            ]
+        else:
+            self.schema = schema
 
     @property
     def subscription_path(self) -> str:
