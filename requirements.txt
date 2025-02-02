@@ -1,5 +1,4 @@
 # Core dependencies
-pip==25.0
 apache-beam[gcp]==2.50.0
 google-cloud-pubsub==2.13.11
 google-cloud-bigquery==3.5.0
