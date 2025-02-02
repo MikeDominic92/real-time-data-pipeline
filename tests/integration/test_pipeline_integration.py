@@ -12,6 +12,15 @@ from rtdp.storage.bigquery import BigQueryClient
 from rtdp.utils.config import PipelineConfig
 
 
+def _get_table_path(config: PipelineConfig) -> str:
+    """Get fully qualified BigQuery table path."""
+    return (
+        f"{config.project_id}"
+        f".{config.dataset_id}"
+        f".{config.table_id}"
+    )
+
+
 @pytest.fixture(scope="module")
 def integration_config() -> Generator[PipelineConfig, None, None]:
     """Integration test configuration."""
@@ -79,10 +88,11 @@ def test_end_to_end_pipeline(
     time.sleep(10)  # Allow time for messages to be processed
 
     # 3. Verify data in BigQuery
+    table_path = _get_table_path(integration_config)
     query = f"""
-    SELECT COUNT(*) as count
-    FROM `{integration_config.project_id}.{integration_config.dataset_id}.{integration_config.table_id}`
-    WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 MINUTE)
+        SELECT COUNT(*) as count
+        FROM `{table_path}`
+        WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 MINUTE)
     """
     results = bigquery_client.query(query)
 
@@ -113,10 +123,11 @@ def test_pipeline_error_recovery(
     time.sleep(10)
 
     # 4. Verify only valid message was processed
+    table_path = _get_table_path(integration_config)
     query = f"""
-    SELECT *
-    FROM `{integration_config.project_id}.{integration_config.dataset_id}.{integration_config.table_id}`
-    WHERE event_id = 'recovery-test'
+        SELECT *
+        FROM `{table_path}`
+        WHERE event_id = 'recovery-test'
     """
     results = bigquery_client.query(query)
 
@@ -153,11 +164,12 @@ def test_pipeline_performance(
     time.sleep(20)
 
     # 4. Verify processing time and completeness
+    table_path = _get_table_path(integration_config)
     query = f"""
-    SELECT COUNT(*) as count
-    FROM `{integration_config.project_id}.{integration_config.dataset_id}.{integration_config.table_id}`
-    WHERE event_id LIKE 'perf-test-%'
-    AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 MINUTE)
+        SELECT COUNT(*) as count
+        FROM `{table_path}`
+        WHERE event_id LIKE 'perf-test-%'
+        AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 MINUTE)
     """
     results = bigquery_client.query(query)
 
@@ -186,10 +198,11 @@ def test_pipeline_data_consistency(
     time.sleep(10)
 
     # 4. Verify data consistency in BigQuery
+    table_path = _get_table_path(integration_config)
     query = f"""
-    SELECT *
-    FROM `{integration_config.project_id}.{integration_config.dataset_id}.{integration_config.table_id}`
-    WHERE event_id = 'consistency-test'
+        SELECT *
+        FROM `{table_path}`
+        WHERE event_id = 'consistency-test'
     """
     results = bigquery_client.query(query)
 
