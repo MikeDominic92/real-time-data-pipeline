@@ -113,12 +113,6 @@ class DataPipeline:
             pcoll
             | "Parse JSON" >> beam.ParDo(ParseJsonDoFn())
             | "Validate Messages" >> beam.ParDo(ValidateMessageDoFn())
-            | "Add Processing Time" >> beam.Map(
-                lambda x: {
-                    **x,
-                    "processing_timestamp": datetime.now().isoformat()
-                }
-            )
         )
 
     def build_pipeline(self) -> beam.Pipeline:
