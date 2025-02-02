@@ -77,17 +77,22 @@ def test_pipeline_transforms(
             p | beam.Create(input_data)
         )
 
-        # Expected output should include processing_timestamp
-        expected_output = dict(sample_message_data)
-        expected_output["processing_timestamp"] = datetime.now().isoformat()
-
         def check_output(elements: list) -> None:
             """Check output elements."""
             assert len(elements) == 1
             element = elements[0]
-            assert element["event_id"] == expected_output["event_id"]
-            assert element["timestamp"] == expected_output["timestamp"]
+            # Check that all original fields are present and unchanged
+            assert element["event_id"] == sample_message_data["event_id"]
+            assert element["timestamp"] == sample_message_data["timestamp"]
+            assert element["data"] == sample_message_data["data"]
+            assert element["metadata"] == sample_message_data["metadata"]
+            # Check that processing_timestamp exists and is in ISO format
             assert "processing_timestamp" in element
+            # Verify it's a valid ISO timestamp
+            try:
+                datetime.fromisoformat(element["processing_timestamp"])
+            except ValueError:
+                pytest.fail("processing_timestamp is not in valid ISO format")
 
         assert_that(output, check_output)
 

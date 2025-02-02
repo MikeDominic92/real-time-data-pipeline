@@ -109,8 +109,27 @@ def mock_bigquery_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, None
             json_rows: list,
             **kwargs: Any
         ) -> list:
-            """Mock insert_rows_json method."""
+            """Mock insert_rows_json method.
+            
+            Args:
+                table: Table reference.
+                json_rows: Rows to insert.
+                **kwargs: Additional arguments passed to the real method.
+
+            Returns:
+                Empty list indicating success.
+            """
             self.inserted_rows.extend(json_rows)
+            return []  # Empty list indicates success
+
+        def query(self, query: str) -> Any:
+            """Mock query method."""
+            self.queries.append(query)
+            return MockQueryJob()
+
+    class MockQueryJob:
+        def result(self) -> list:
+            """Mock result method."""
             return []
 
     client = MockBigQueryClient()
