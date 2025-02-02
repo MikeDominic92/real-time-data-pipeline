@@ -19,6 +19,11 @@ jobs:
       with:
         python-version: '3.9'
         
+    - name: Configure pip
+      run: |
+        mkdir -p ~/.pip
+        cp pip.conf ~/.pip/pip.conf
+        
     - name: Cache pip packages
       uses: actions/cache@v3
       with:
