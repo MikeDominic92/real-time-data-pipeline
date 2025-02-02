@@ -70,46 +70,13 @@ def test_config() -> PipelineConfig:
 
 
 @pytest.fixture
-def mock_publisher_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, None, None]:
-    """Mock the Pub/Sub publisher client."""
-    class MockPublisherClient:
-        def __init__(self) -> None:
-            self.published_messages = []
-
-        def topic_path(self, project_id: str, topic_id: str) -> str:
-            """Create a topic path."""
-            return f"projects/{project_id}/topics/{topic_id}"
-
-        def publish(
-            self,
-            topic: str,
-            data: bytes,
-            ordering_key: str = None,
-            **attrs: str
-        ) -> str:
-            """Mock publish method.
-            
-            Args:
-                topic: Topic to publish to.
-                data: Message data.
-                ordering_key: Optional ordering key.
-                **attrs: Additional attributes.
-            
-            Returns:
-                Message ID.
-            """
-            message = {
-                "topic": topic,
-                "data": data,
-                "ordering_key": ordering_key,
-                "attributes": attrs
-            }
-            self.published_messages.append(message)
-            return "test-message-id"
-
-    client = MockPublisherClient()
-    monkeypatch.setattr(pubsub_v1, "PublisherClient", lambda: client)
-    yield client
+def mock_publisher_client(monkeypatch):
+    class MockPublisher:
+        def publish(self, topic: str, data: bytes, **kwargs):
+            return 'message-id'
+    client = MockPublisher()
+    monkeypatch.setattr('google.cloud.pubsub_v1.PublisherClient', lambda: client)
+    return client
 
 
 @pytest.fixture
