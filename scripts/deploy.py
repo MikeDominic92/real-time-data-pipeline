@@ -1,13 +1,15 @@
 """Deployment script for the Real-Time Data Pipeline."""
 
-import argparse
 import os
-import subprocess
-import time
+import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import argparse
+import subprocess
+import time
 import yaml
-from google.cloud import dataflow
+from google.cloud import dataflow_v1beta3 as dataflow
 from google.cloud import storage
 
 
