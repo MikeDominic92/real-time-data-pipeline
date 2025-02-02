@@ -12,9 +12,17 @@ from apache_beam.testing.util import assert_that, equal_to
 from rtdp.processor.pipeline import DataPipeline, ParseJsonDoFn, ValidateMessageDoFn
 
 
-def test_parse_json_dofn(sample_message_data: Dict[str, Any]) -> None:
+@pytest.fixture
+def test_pipeline():
+    from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
+    options = PipelineOptions()
+    options.view_as(StandardOptions).streaming = True
+    return TestPipeline(options=options)
+
+
+def test_parse_json_dofn(test_pipeline, sample_message_data: Dict[str, Any]) -> None:
     """Test JSON parsing transformation."""
-    with TestPipeline() as p:
+    with test_pipeline as p:
         input_data = [json.dumps(sample_message_data).encode("utf-8")]
         output = (
             p
@@ -27,7 +35,7 @@ def test_parse_json_dofn(sample_message_data: Dict[str, Any]) -> None:
 
 def test_validate_message_dofn(sample_message_data: Dict[str, Any]) -> None:
     """Test message validation transformation."""
-    with TestPipeline() as p:
+    with test_pipeline() as p:
         output = (
             p
             | beam.Create([sample_message_data])
@@ -44,7 +52,7 @@ def test_validate_message_dofn_invalid_message() -> None:
         "invalid": "message"
     }
 
-    with TestPipeline() as p:
+    with test_pipeline() as p:
         output = (
             p
             | beam.Create([invalid_message])
@@ -68,7 +76,7 @@ def test_pipeline_transforms(
     """Test pipeline transformations."""
     pipeline = DataPipeline(config=test_config)
 
-    with TestPipeline() as p:
+    with test_pipeline() as p:
         # Create sample input
         input_data = [json.dumps(sample_message_data).encode("utf-8")]
 
@@ -104,7 +112,7 @@ def test_pipeline_with_windowing(
     """Test pipeline with windowing transforms."""
     pipeline = DataPipeline(config=test_config)
 
-    with TestPipeline() as p:
+    with test_pipeline() as p:
         # Create sample input
         input_data = [
             json.dumps(sample_message_data).encode("utf-8"),
@@ -137,7 +145,7 @@ def test_pipeline_error_handling(
     """Test pipeline error handling."""
     pipeline = DataPipeline(config=test_config)
 
-    with TestPipeline() as p:
+    with test_pipeline() as p:
         # Create mixed input with valid and invalid messages
         input_data = [
             json.dumps(sample_message_data).encode("utf-8"),
@@ -160,3 +168,11 @@ def test_pipeline_error_handling(
             assert "processing_timestamp" in element
 
         assert_that(output, check_error_handling)
+
+
+sample_message_data = {
+    "event_id": "12345",
+    "timestamp": "2022-01-01T12:00:00",
+    "data": {"key": "value"},
+    "metadata": {"source": "test", "version": "1.0"}
+}

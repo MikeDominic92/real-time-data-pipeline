@@ -12,7 +12,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 class ParseJsonDoFn(beam.DoFn):
     """Parse JSON messages from Pub/Sub."""
 
-    def process(self, element: bytes, timestamp=beam.DoFn.TimestampParam) -> Iterator[Dict[str, Any]]:
+    def process(self, element: bytes, timestamp: beam.DoFn.TimestampParam = beam.DoFn.TimestampParam) -> Iterator[Dict[str, Any]]:
         """Process each Pub/Sub message.
 
         Args:
@@ -24,7 +24,7 @@ class ParseJsonDoFn(beam.DoFn):
         """
         try:
             # Decode and parse JSON message
-            message = json.loads(element.decode("utf-8"))
+            message: Dict[str, Any] = json.loads(element.decode("utf-8"))
             
             # Add processing timestamp
             message["processing_timestamp"] = timestamp.to_utc_datetime().isoformat()
@@ -67,7 +67,7 @@ class ValidateMessageDoFn(beam.DoFn):
                 return
 
             # Validate metadata
-            metadata = element.get("metadata", {})
+            metadata: Dict[str, Any] = element.get("metadata", {})
             if not isinstance(metadata, dict):
                 logging.error("Metadata must be a dictionary")
                 return
@@ -121,10 +121,10 @@ class DataPipeline:
         Returns:
             An Apache Beam Pipeline object.
         """
-        pipeline = beam.Pipeline(options=self.config.pipeline_options)
+        pipeline: beam.Pipeline = beam.Pipeline(options=self.config.pipeline_options)
 
         # Read from Pub/Sub
-        messages = (
+        messages: beam.PCollection = (
             pipeline
             | "Read from Pub/Sub" >> beam.io.ReadFromPubSub(
                 subscription=self.config.subscription_path
@@ -132,10 +132,10 @@ class DataPipeline:
         )
 
         # Apply pipeline transformations
-        transformed_messages = self.apply_transforms(messages)
+        transformed_messages: beam.PCollection = self.apply_transforms(messages)
 
         # Write to BigQuery
-        table_spec = f"{self.config.project_id}:{self.config.dataset_id}.{self.config.table_id}"
+        table_spec: str = f"{self.config.project_id}:{self.config.dataset_id}.{self.config.table_id}"
         transformed_messages | "Write to BigQuery" >> beam.io.WriteToBigQuery(
             table_spec,
             schema=self.config.schema,

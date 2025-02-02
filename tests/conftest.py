@@ -72,8 +72,10 @@ def test_config() -> PipelineConfig:
 @pytest.fixture
 def mock_publisher_client(monkeypatch):
     class MockPublisher:
-        def publish(self, topic: str, data: bytes, **kwargs):
-            return 'message-id'
+        def topic_path(self, project, topic):
+            return f'projects/{project}/topics/{topic}'
+        def publish(self, topic, data, **kwargs):
+            return 'mock-message-id'
     client = MockPublisher()
     monkeypatch.setattr('google.cloud.pubsub_v1.PublisherClient', lambda: client)
     return client
