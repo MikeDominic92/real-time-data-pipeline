@@ -31,12 +31,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
-        pip install -e ".[dev,test,perf]"
+        pip install -e ".[dev]"  # Install development dependencies first
+        pip install -e ".[test]"  # Then test dependencies
+        pip install -e ".[perf]"  # Finally performance dependencies
 
     - name: Run linting
       run: |
+        which python
+        python --version
+        which pytest
+        pytest --version
         flake8 src tests
         black --check src tests
         isort --check-only src tests
@@ -84,9 +90,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
-        pip install -e ".[dev,test,perf]"
+        pip install -e ".[dev]"  # Install development dependencies first
+        pip install -e ".[test]"  # Then test dependencies
+        pip install -e ".[perf]"  # Finally performance dependencies
 
     - name: Set up GCP credentials
       uses: google-github-actions/auth@v1
