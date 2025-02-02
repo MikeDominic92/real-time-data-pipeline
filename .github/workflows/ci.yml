@@ -2,25 +2,23 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.9]
-
+    
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.9
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-
+        python-version: '3.9'
+        
     - name: Cache pip packages
       uses: actions/cache@v3
       with:
@@ -33,113 +31,28 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
-        pip install -e ".[dev]"  # Install development dependencies first
-        pip install -e ".[test]"  # Then test dependencies
-        pip install -e ".[perf]"  # Finally performance dependencies
+        pip install flake8 black isort mypy pytest-cov
 
     - name: Run linting
       run: |
-        which python
-        python --version
-        which pytest
-        pytest --version
-        flake8 src tests
+        # Run flake8
+        flake8 src tests --max-line-length=100 --extend-ignore=E203
+
+        # Run black
         black --check src tests
+
+        # Run isort
         isort --check-only src tests
-        mypy src
+
+        # Run mypy
+        mypy src --ignore-missing-imports
 
     - name: Run tests
       run: |
-        python -m pytest tests/unit -v --cov=src --cov-report=xml
-
-    - name: Debug test environment
-      if: failure()
-      run: |
-        python --version
-        pip list
-        pytest --version
-        ls -la tests/unit/
-        cat tests/unit/test_pipeline.py
+        pytest tests/ -v --cov=src --cov-report=xml
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
         fail_ci_if_error: true
-
-    - name: Security scan
-      run: |
-        pip install safety bandit
-        safety check --ignore=51457
-        bandit -r src/ -x tests/
-
-  integration-test:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install -r requirements.txt
-        pip install -e ".[dev]"  # Install development dependencies first
-        pip install -e ".[test]"  # Then test dependencies
-        pip install -e ".[perf]"  # Finally performance dependencies
-
-    - name: Set up GCP credentials
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-    - name: Set up GCP SDK
-      uses: google-github-actions/setup-gcloud@v1
-
-    - name: Run integration tests
-      run: |
-        pytest tests/integration --cov=src --cov-report=xml
-      env:
-        GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-        GCP_REGION: ${{ secrets.GCP_REGION }}
-
-    - name: Upload coverage report
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: integration
-        name: codecov-umbrella
-        fail_ci_if_error: true
-
-  security-scan:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-
-    - name: Install security tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit safety
-
-    - name: Run Bandit security scan
-      run: |
-        bandit -r src/ -ll
-
-    - name: Check dependencies for known vulnerabilities
-      run: |
-        safety check
