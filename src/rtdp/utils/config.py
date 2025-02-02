@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 import yaml
-from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
 from google.cloud import bigquery
 
 
@@ -64,9 +64,12 @@ class PipelineConfig:
         self.table_id = table_id
         self.batch_size = batch_size
         self.streaming = streaming
+        
+        # Set up pipeline options
         self.pipeline_options = pipeline_options or PipelineOptions()
         if self.streaming:
-            self.pipeline_options.view_as(PipelineOptions).streaming = True
+            standard_options = self.pipeline_options.view_as(StandardOptions)
+            standard_options.streaming = True
         
         # Set up default schema if none provided
         if schema is None:
@@ -127,7 +130,8 @@ class PipelineConfig:
         """
         pipeline_options = PipelineOptions()
         if os.getenv("PIPELINE_STREAMING", "true").lower() == "true":
-            pipeline_options.view_as(PipelineOptions).streaming = True
+            standard_options = pipeline_options.view_as(StandardOptions)
+            standard_options.streaming = True
 
         return cls(
             project_id=os.getenv("GCP_PROJECT_ID", ""),
