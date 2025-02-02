@@ -45,5 +45,6 @@ jobs:
     - name: Deploy application
       run: |
         python scripts/deploy.py \
+          --project-id ${{ env.PROJECT_ID }} \
           --environment ${{ github.event.inputs.environment || 'staging' }} \
           --version ${{ github.sha }}
