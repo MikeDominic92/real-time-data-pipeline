@@ -1,7 +1,7 @@
 """Configuration management utilities."""
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 import yaml
@@ -76,9 +76,7 @@ class PipelineConfig:
             self.schema = [
                 bigquery.SchemaField("event_id", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("timestamp", "TIMESTAMP", mode="REQUIRED"),
-                bigquery.SchemaField(
-                    "processing_timestamp", "TIMESTAMP", mode="REQUIRED"
-                ),
+                bigquery.SchemaField("processing_timestamp", "TIMESTAMP", mode="REQUIRED"),
                 bigquery.SchemaField(
                     "data",
                     "RECORD",

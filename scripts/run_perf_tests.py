@@ -1,7 +1,6 @@
 """Script to run performance tests for the Real-Time Data Pipeline."""
 
 import argparse
-import json
 import os
 from datetime import datetime
 
@@ -38,27 +37,13 @@ def main() -> None:
         type=int,
         help="Duration in seconds for constant load test",
     )
-    parser.add_argument(
-        "--initial-rate", type=int, help="Initial rate for increasing load test"
-    )
-    parser.add_argument(
-        "--final-rate", type=int, help="Final rate for increasing load test"
-    )
-    parser.add_argument(
-        "--step-size", type=int, help="Step size for increasing load test"
-    )
-    parser.add_argument(
-        "--step-duration", type=int, help="Step duration for increasing load test"
-    )
-    parser.add_argument(
-        "--burst-size", type=int, help="Messages per second during burst"
-    )
-    parser.add_argument(
-        "--burst-duration", type=int, help="Duration of each burst in seconds"
-    )
-    parser.add_argument(
-        "--rest-duration", type=int, help="Duration of rest between bursts"
-    )
+    parser.add_argument("--initial-rate", type=int, help="Initial rate for increasing load test")
+    parser.add_argument("--final-rate", type=int, help="Final rate for increasing load test")
+    parser.add_argument("--step-size", type=int, help="Step size for increasing load test")
+    parser.add_argument("--step-duration", type=int, help="Step duration for increasing load test")
+    parser.add_argument("--burst-size", type=int, help="Messages per second during burst")
+    parser.add_argument("--burst-duration", type=int, help="Duration of each burst in seconds")
+    parser.add_argument("--rest-duration", type=int, help="Duration of rest between bursts")
     parser.add_argument("--num-bursts", type=int, help="Number of bursts")
 
     args = parser.parse_args()
@@ -80,8 +65,7 @@ def main() -> None:
     if args.test_type == "constant":
         if not (args.messages_per_second and args.duration_seconds):
             parser.error(
-                "constant load test requires --messages-per-second and "
-                "--duration-seconds"
+                "constant load test requires --messages-per-second and " "--duration-seconds"
             )
 
         print(
@@ -89,57 +73,33 @@ def main() -> None:
             f"for {args.duration_seconds}s"
         )
 
-        results = [
-            runner.run_constant_load_test(
-                args.messages_per_second, args.duration_seconds
-            )
-        ]
+        results = [runner.run_constant_load_test(args.messages_per_second, args.duration_seconds)]
 
-        output_file = os.path.join(
-            args.output_dir, f"constant_load_test_{timestamp}.json"
-        )
+        output_file = os.path.join(args.output_dir, f"constant_load_test_{timestamp}.json")
 
     elif args.test_type == "increasing":
-        if not (
-            args.initial_rate
-            and args.final_rate
-            and args.step_size
-            and args.step_duration
-        ):
+        if not (args.initial_rate and args.final_rate and args.step_size and args.step_duration):
             parser.error(
                 "increasing load test requires --initial-rate, --final-rate, "
                 "--step-size, and --step-duration"
             )
 
-        print(
-            f"Running increasing load test: {args.initial_rate} to "
-            f"{args.final_rate} msg/s"
-        )
+        print(f"Running increasing load test: {args.initial_rate} to " f"{args.final_rate} msg/s")
 
         results = runner.run_increasing_load_test(
             args.initial_rate, args.final_rate, args.step_size, args.step_duration
         )
 
-        output_file = os.path.join(
-            args.output_dir, f"increasing_load_test_{timestamp}.json"
-        )
+        output_file = os.path.join(args.output_dir, f"increasing_load_test_{timestamp}.json")
 
     else:  # burst
-        if not (
-            args.burst_size
-            and args.burst_duration
-            and args.rest_duration
-            and args.num_bursts
-        ):
+        if not (args.burst_size and args.burst_duration and args.rest_duration and args.num_bursts):
             parser.error(
                 "burst load test requires --burst-size, --burst-duration, "
                 "--rest-duration, and --num-bursts"
             )
 
-        print(
-            f"Running burst load test: {args.burst_size} msg/s, "
-            f"{args.num_bursts} bursts"
-        )
+        print(f"Running burst load test: {args.burst_size} msg/s, " f"{args.num_bursts} bursts")
 
         results = runner.run_burst_load_test(
             args.burst_size, args.burst_duration, args.rest_duration, args.num_bursts

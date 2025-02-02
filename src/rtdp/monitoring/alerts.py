@@ -1,19 +1,17 @@
 """Alert management for the Real-Time Data Pipeline."""
 
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from google.cloud import monitoring_v3
-from google.cloud.monitoring_v3 import AlertPolicy, NotificationChannel
+from google.cloud.monitoring_v3 import AlertPolicy
 from google.protobuf.duration_pb2 import Duration
 
 
 class AlertManager:
     """Manage alerts for the Real-Time Data Pipeline."""
 
-    def __init__(
-        self, project_id: str, notification_channels: Optional[List[str]] = None
-    ) -> None:
+    def __init__(self, project_id: str, notification_channels: Optional[List[str]] = None) -> None:
         """Initialize alert manager.
 
         Args:
@@ -63,9 +61,7 @@ class AlertManager:
             condition_threshold=monitoring_v3.AlertPolicy.Condition.MetricThreshold(
                 filter=filter_str,
                 duration=duration_pb,
-                comparison=getattr(
-                    monitoring_v3.AlertPolicy.Condition.ComparisonType, comparison
-                ),
+                comparison=getattr(monitoring_v3.AlertPolicy.Condition.ComparisonType, comparison),
                 threshold_value=threshold_value,
                 aggregations=[
                     monitoring_v3.Aggregation(
@@ -244,9 +240,7 @@ class AlertManager:
         """
         return list(self.client.list_alert_policies(name=self.project_name))
 
-    def update_alert_policy(
-        self, policy_name: str, alert_policy: AlertPolicy
-    ) -> AlertPolicy:
+    def update_alert_policy(self, policy_name: str, alert_policy: AlertPolicy) -> AlertPolicy:
         """Update an alert policy.
 
         Args:

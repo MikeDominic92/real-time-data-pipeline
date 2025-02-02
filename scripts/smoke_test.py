@@ -4,7 +4,7 @@ import argparse
 import json
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from google.cloud import bigquery, pubsub_v1
 
@@ -115,9 +115,7 @@ class SmokeTest:
 
 def main() -> None:
     """Main function."""
-    parser = argparse.ArgumentParser(
-        description="Run smoke tests for Real-Time Data Pipeline"
-    )
+    parser = argparse.ArgumentParser(description="Run smoke tests for Real-Time Data Pipeline")
     parser.add_argument("--project-id", required=True, help="GCP project ID")
     parser.add_argument(
         "--environment",

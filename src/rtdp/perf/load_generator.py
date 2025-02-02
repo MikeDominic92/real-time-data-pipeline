@@ -6,7 +6,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from google.cloud import pubsub_v1
 
@@ -52,9 +52,7 @@ class LoadGenerator:
                 "value": random.random(),
                 "category": random.choice(["A", "B", "C", "D"]),
                 "priority": random.randint(1, 5),
-                "tags": [
-                    f"tag_{random.randint(1, 10)}" for _ in range(random.randint(1, 5))
-                ],
+                "tags": [f"tag_{random.randint(1, 10)}" for _ in range(random.randint(1, 5))],
             },
             "metadata": {
                 "source": "perf_test",
@@ -63,9 +61,7 @@ class LoadGenerator:
             },
         }
 
-    def _publish_message(
-        self, message: Dict[str, Any], batch_id: Optional[str] = None
-    ) -> None:
+    def _publish_message(self, message: Dict[str, Any], batch_id: Optional[str] = None) -> None:
         """Publish a message to Pub/Sub.
 
         Args:
@@ -93,27 +89,20 @@ class LoadGenerator:
                 self.metrics.record_error("publish_error")
             raise e
 
-    def generate_constant_load(
-        self, messages_per_second: int, duration_seconds: int
-    ) -> None:
+    def generate_constant_load(self, messages_per_second: int, duration_seconds: int) -> None:
         """Generate constant load.
 
         Args:
             messages_per_second: Number of messages per second
             duration_seconds: Test duration in seconds
         """
-        print(
-            f"Generating constant load: {messages_per_second} msg/s for {duration_seconds}s"
-        )
+        print(f"Generating constant load: {messages_per_second} msg/s for {duration_seconds}s")
 
         start_time = time.time()
         message_count = 0
 
         with ThreadPoolExecutor(max_workers=10) as executor:
-            while (
-                time.time() - start_time < duration_seconds
-                and not self._stop_event.is_set()
-            ):
+            while time.time() - start_time < duration_seconds and not self._stop_event.is_set():
                 batch_start = time.time()
                 batch_id = f"batch-{int(batch_start)}"
 
@@ -121,9 +110,7 @@ class LoadGenerator:
                 futures = []
                 for i in range(messages_per_second):
                     message = self._generate_message(message_count + i)
-                    futures.append(
-                        executor.submit(self._publish_message, message, batch_id)
-                    )
+                    futures.append(executor.submit(self._publish_message, message, batch_id))
 
                 # Wait for batch to complete
                 for future in futures:

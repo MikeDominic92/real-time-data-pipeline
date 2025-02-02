@@ -2,7 +2,6 @@
 
 import argparse
 import os
-from pathlib import Path
 from typing import Any, Dict
 
 import apache_beam as beam
@@ -70,9 +69,7 @@ class PipelineDeployer:
         # Find the first .tar.gz file in dist directory
         dist_files = [f for f in os.listdir("dist") if f.endswith(".tar.gz")]
         if not dist_files:
-            raise FileNotFoundError(
-                "No .tar.gz distribution package found in dist/ directory"
-            )
+            raise FileNotFoundError("No .tar.gz distribution package found in dist/ directory")
 
         dist_file = os.path.join("dist", dist_files[0])
         blob_name = f"rtdp-{self.version}.tar.gz"

@@ -3,7 +3,6 @@
 import json
 from typing import Any, Dict
 
-import pytest
 from google.cloud import pubsub_v1
 
 from rtdp.publisher.publisher import DataPublisher
@@ -54,9 +53,7 @@ def test_publish_message_with_attributes(
     attributes = {"source": "test-source", "environment": "test"}
 
     # Publish a message with attributes
-    future = publisher.publish(
-        data=sample_message_data, ordering_key="test-key", **attributes
-    )
+    future = publisher.publish(data=sample_message_data, ordering_key="test-key", **attributes)
 
     # Verify the message was published with attributes
     assert future == "message-id"

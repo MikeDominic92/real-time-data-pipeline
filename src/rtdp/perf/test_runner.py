@@ -3,10 +3,10 @@
 import json
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
-from google.cloud import bigquery, monitoring_v3, pubsub_v1
+from google.cloud import bigquery, monitoring_v3
 
 from rtdp.monitoring.metrics import MetricsCollector
 from rtdp.perf.load_generator import LoadGenerator
@@ -32,9 +32,7 @@ class TestResult:
 class PerformanceTestRunner:
     """Run performance tests for the Real-Time Data Pipeline."""
 
-    def __init__(
-        self, project_id: str, topic_id: str, dataset_id: str, table_id: str
-    ) -> None:
+    def __init__(self, project_id: str, topic_id: str, dataset_id: str, table_id: str) -> None:
         """Initialize test runner.
 
         Args:
@@ -161,9 +159,7 @@ class PerformanceTestRunner:
         row = next(iter(results))
         return row.sent, row.processed
 
-    def run_constant_load_test(
-        self, messages_per_second: int, duration_seconds: int
-    ) -> TestResult:
+    def run_constant_load_test(self, messages_per_second: int, duration_seconds: int) -> TestResult:
         """Run constant load test.
 
         Args:
@@ -177,9 +173,7 @@ class PerformanceTestRunner:
         start_time = datetime.utcnow()
 
         try:
-            self.load_generator.generate_constant_load(
-                messages_per_second, duration_seconds
-            )
+            self.load_generator.generate_constant_load(messages_per_second, duration_seconds)
         finally:
             self.load_generator.stop()
             self.load_generator.wait_for_completion()
@@ -196,13 +190,11 @@ class PerformanceTestRunner:
             [0.5, 0.95, 0.99],
         )
 
-        messages_sent, messages_processed = self._get_message_counts(
-            start_time, end_time
-        )
+        messages_sent, messages_processed = self._get_message_counts(start_time, end_time)
 
-        errors = self._get_metric_stats(
-            "custom.googleapis.com/rtdp/errors", start_time, end_time
-        )[0]
+        errors = self._get_metric_stats("custom.googleapis.com/rtdp/errors", start_time, end_time)[
+            0
+        ]
 
         test_duration = (end_time - start_time).total_seconds()
         throughput = messages_processed / test_duration if test_duration > 0 else 0

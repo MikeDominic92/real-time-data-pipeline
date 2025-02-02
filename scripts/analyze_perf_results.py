@@ -183,9 +183,7 @@ def main() -> None:
     """Main function."""
     parser = argparse.ArgumentParser(description="Analyze performance test results")
     parser.add_argument("results_file", help="Path to test results file")
-    parser.add_argument(
-        "--output-prefix", default="perf_analysis", help="Prefix for output files"
-    )
+    parser.add_argument("--output-prefix", default="perf_analysis", help="Prefix for output files")
     args = parser.parse_args()
 
     # Load results

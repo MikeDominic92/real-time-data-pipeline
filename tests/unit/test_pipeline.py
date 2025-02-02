@@ -33,9 +33,7 @@ def test_parse_json_dofn(test_pipeline, sample_message_data: Dict[str, Any]) -> 
 def test_validate_message_dofn(sample_message_data: Dict[str, Any]) -> None:
     """Test message validation transformation."""
     with test_pipeline() as p:
-        output = (
-            p | beam.Create([sample_message_data]) | beam.ParDo(ValidateMessageDoFn())
-        )
+        output = p | beam.Create([sample_message_data]) | beam.ParDo(ValidateMessageDoFn())
 
         # The validation should pass and output the same message
         assert_that(output, equal_to([sample_message_data]))
@@ -58,9 +56,7 @@ def test_pipeline_creation(test_config: Any) -> None:
     assert pipeline.config == test_config
 
 
-def test_pipeline_transforms(
-    test_config: Any, sample_message_data: Dict[str, Any]
-) -> None:
+def test_pipeline_transforms(test_config: Any, sample_message_data: Dict[str, Any]) -> None:
     """Test pipeline transformations."""
     pipeline = DataPipeline(config=test_config)
 
@@ -91,9 +87,7 @@ def test_pipeline_transforms(
         assert_that(output, check_output)
 
 
-def test_pipeline_with_windowing(
-    test_config: Any, sample_message_data: Dict[str, Any]
-) -> None:
+def test_pipeline_with_windowing(test_config: Any, sample_message_data: Dict[str, Any]) -> None:
     """Test pipeline with windowing transforms."""
     pipeline = DataPipeline(config=test_config)
 
@@ -123,9 +117,7 @@ def test_pipeline_with_windowing(
         assert_that(output, check_windowed_output)
 
 
-def test_pipeline_error_handling(
-    test_config: Any, sample_message_data: Dict[str, Any]
-) -> None:
+def test_pipeline_error_handling(test_config: Any, sample_message_data: Dict[str, Any]) -> None:
     """Test pipeline error handling."""
     pipeline = DataPipeline(config=test_config)
 

@@ -1,11 +1,10 @@
 """Test configuration and fixtures for the Real-Time Data Pipeline."""
 
 import json
-import os
 from typing import Any, Dict, Generator
 
 import pytest
-from google.cloud import bigquery, pubsub_v1
+from google.cloud import bigquery
 from google.cloud.pubsub_v1.subscriber.message import Message
 
 from rtdp.utils.config import PipelineConfig

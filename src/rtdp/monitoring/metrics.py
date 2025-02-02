@@ -1,20 +1,15 @@
 """Metrics collector for the Real-Time Data Pipeline."""
 
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
 from google.cloud import monitoring_v3
-from google.cloud.monitoring_v3 import MetricServiceClient
-from google.cloud.monitoring_v3.types import TimeSeries
 
 
 class MetricsCollector:
     """Collect and report metrics to Cloud Monitoring."""
 
-    def __init__(
-        self, project_id: str, metric_prefix: str = "custom.googleapis.com/rtdp"
-    ) -> None:
+    def __init__(self, project_id: str, metric_prefix: str = "custom.googleapis.com/rtdp") -> None:
         """Initialize metrics collector.
 
         Args:
@@ -70,9 +65,7 @@ class MetricsCollector:
         point.interval.end_time.seconds = int(now)
         point.interval.end_time.nanos = int((now - int(now)) * 10**9)
 
-        self.client.create_time_series(
-            request={"name": self.project_path, "time_series": [series]}
-        )
+        self.client.create_time_series(request={"name": self.project_path, "time_series": [series]})
 
     def record_counter(
         self, name: str, value: int = 1, labels: Optional[Dict[str, str]] = None
@@ -155,9 +148,7 @@ class MetricsCollector:
         """
         self.record_counter(name=f"errors/{name}", value=1, labels=labels)
 
-    def record_success(
-        self, name: str, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def record_success(self, name: str, labels: Optional[Dict[str, str]] = None) -> None:
         """Record a success metric.
 
         Args:

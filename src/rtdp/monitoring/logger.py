@@ -68,9 +68,7 @@ class PipelineLogger:
         handler = CloudLoggingHandler(client, name=self.name, transport=SyncTransport)
         self.logger.addHandler(handler)
 
-    def _format_structured_log(
-        self, message: str, severity: str, **kwargs: Any
-    ) -> Dict[str, Any]:
+    def _format_structured_log(self, message: str, severity: str, **kwargs: Any) -> Dict[str, Any]:
         """Format structured log entry.
 
         Args:
@@ -98,9 +96,7 @@ class PipelineLogger:
             message: Log message
             **kwargs: Additional log fields
         """
-        structured_log = self._format_structured_log(
-            message=message, severity=severity, **kwargs
-        )
+        structured_log = self._format_structured_log(message=message, severity=severity, **kwargs)
 
         log_message = json.dumps(structured_log)
         getattr(self.logger, severity.lower())(log_message)

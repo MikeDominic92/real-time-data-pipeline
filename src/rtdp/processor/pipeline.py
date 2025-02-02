@@ -3,10 +3,9 @@
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, Iterator, Optional, Tuple
+from typing import Any, Dict, Iterator
 
 import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions
 
 
 class ParseJsonDoFn(beam.DoFn):
@@ -122,10 +121,8 @@ class DataPipeline:
         pipeline: beam.Pipeline = beam.Pipeline(options=self.config.pipeline_options)
 
         # Read from Pub/Sub
-        messages: beam.PCollection = (
-            pipeline
-            | "Read from Pub/Sub"
-            >> beam.io.ReadFromPubSub(subscription=self.config.subscription_path)
+        messages: beam.PCollection = pipeline | "Read from Pub/Sub" >> beam.io.ReadFromPubSub(
+            subscription=self.config.subscription_path
         )
 
         # Apply pipeline transformations

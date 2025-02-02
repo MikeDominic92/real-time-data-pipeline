@@ -3,7 +3,7 @@
 import os
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import psutil
 import yaml
@@ -16,9 +16,7 @@ from rtdp.monitoring.metrics import MetricsCollector
 class MonitoringService:
     """Central monitoring service for the Real-Time Data Pipeline."""
 
-    def __init__(
-        self, project_id: str, config_path: str, service_name: str = "rtdp"
-    ) -> None:
+    def __init__(self, project_id: str, config_path: str, service_name: str = "rtdp") -> None:
         """Initialize the monitoring service.
 
         Args:
@@ -98,12 +96,8 @@ class MonitoringService:
         if "processing_latency" in alerts_config:
             self.alerts.create_latency_alert(
                 metric_type="processing_latency",
-                threshold_seconds=alerts_config["processing_latency"][
-                    "threshold_seconds"
-                ],
-                duration_seconds=alerts_config["processing_latency"][
-                    "duration_seconds"
-                ],
+                threshold_seconds=alerts_config["processing_latency"]["threshold_seconds"],
+                duration_seconds=alerts_config["processing_latency"]["duration_seconds"],
             )
 
         # Error rate alerts
@@ -162,9 +156,7 @@ class MonitoringService:
         self.metrics.record_counter("messages_received")
         self.logger.info("Message received")
 
-    def record_message_processed(
-        self, processing_time: float, success: bool = True
-    ) -> None:
+    def record_message_processed(self, processing_time: float, success: bool = True) -> None:
         """Record message processing metrics.
 
         Args:
@@ -173,17 +165,11 @@ class MonitoringService:
         """
         if success:
             self.metrics.record_counter("messages_processed")
-            self.metrics.record_latency(
-                name="processing_latency", latency=processing_time
-            )
-            self.logger.info(
-                "Message processed successfully", processing_time=processing_time
-            )
+            self.metrics.record_latency(name="processing_latency", latency=processing_time)
+            self.logger.info("Message processed successfully", processing_time=processing_time)
         else:
             self.metrics.record_counter("messages_failed")
-            self.logger.error(
-                "Message processing failed", processing_time=processing_time
-            )
+            self.logger.error("Message processing failed", processing_time=processing_time)
 
     def record_batch_processed(self, batch_size: int, processing_time: float) -> None:
         """Record batch processing metrics.
@@ -193,12 +179,8 @@ class MonitoringService:
             processing_time: Time taken to process the batch
         """
         self.metrics.record_batch_size(name="batch_size", size=batch_size)
-        self.metrics.record_latency(
-            name="batch_processing_time", latency=processing_time
-        )
-        self.logger.info(
-            "Batch processed", batch_size=batch_size, processing_time=processing_time
-        )
+        self.metrics.record_latency(name="batch_processing_time", latency=processing_time)
+        self.logger.info("Batch processed", batch_size=batch_size, processing_time=processing_time)
 
     def record_error(self, error_type: str, error_message: str, **kwargs: Any) -> None:
         """Record an error.

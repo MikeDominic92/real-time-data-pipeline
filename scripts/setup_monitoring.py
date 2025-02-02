@@ -1,13 +1,11 @@
 """Script to set up monitoring infrastructure for the Real-Time Data Pipeline."""
 
 import argparse
-import os
 from typing import Any, Dict
 
 import yaml
 from google.cloud import monitoring_v3, secretmanager_v1
 
-from rtdp.monitoring.alerts import AlertManager
 from rtdp.monitoring.service import MonitoringService
 
 
@@ -139,9 +137,7 @@ def main() -> None:
         config = yaml.safe_load(f)
 
     # Set up notification channels
-    channels = setup_notification_channels(
-        args.project_id, config.get("notification_channels", [])
-    )
+    channels = setup_notification_channels(args.project_id, config.get("notification_channels", []))
 
     # Initialize monitoring service
     monitoring_service = MonitoringService(

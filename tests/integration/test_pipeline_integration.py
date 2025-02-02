@@ -2,13 +2,11 @@
 
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, Generator
 
 import pytest
-from google.cloud import bigquery, pubsub_v1
 
-from rtdp.processor.pipeline import DataPipeline
 from rtdp.publisher.publisher import DataPublisher
 from rtdp.storage.bigquery import BigQueryClient
 from rtdp.utils.config import PipelineConfig
