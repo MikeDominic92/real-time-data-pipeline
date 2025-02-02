@@ -123,6 +123,23 @@ class DataPipeline:
         """
         pipeline = beam.Pipeline(options=self.config.pipeline_options)
 
+        # Define the BigQuery schema
+        schema = {
+            "fields": [
+                {"name": "event_id", "type": "STRING", "mode": "REQUIRED"},
+                {"name": "timestamp", "type": "TIMESTAMP", "mode": "REQUIRED"},
+                {"name": "processing_timestamp", "type": "TIMESTAMP", "mode": "REQUIRED"},
+                {"name": "data", "type": "RECORD", "mode": "REQUIRED", "fields": [
+                    {"name": "key1", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "key2", "type": "STRING", "mode": "NULLABLE"}
+                ]},
+                {"name": "metadata", "type": "RECORD", "mode": "REQUIRED", "fields": [
+                    {"name": "source", "type": "STRING", "mode": "REQUIRED"},
+                    {"name": "version", "type": "STRING", "mode": "REQUIRED"}
+                ]}
+            ]
+        }
+
         # Read from Pub/Sub
         messages = (
             pipeline
@@ -138,6 +155,7 @@ class DataPipeline:
         table_spec = f"{self.config.project_id}:{self.config.dataset_id}.{self.config.table_id}"
         transformed_messages | "Write to BigQuery" >> beam.io.WriteToBigQuery(
             table_spec,
+            schema=schema,
             write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
             create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
         )
