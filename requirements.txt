@@ -1,9 +1,8 @@
 # Core dependencies
-apache-beam[gcp]==2.50.0
+apache-beam[gcp]==2.50.0  # This includes all Dataflow functionality
 google-cloud-pubsub==2.13.11
 google-cloud-bigquery==3.5.0
 google-cloud-storage==2.10.0
-google-cloud-dataflow==2.7.0  # Adding our missing LEGO piece
 pytest==7.4.0
 pyyaml==6.0.1
 

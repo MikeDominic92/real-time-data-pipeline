@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
-# Think of this like telling your friend where to find the LEGO piece
-from google.cloud import dataflow_v1beta3 as dataflow
+import apache_beam as beam
+from apache_beam.options.pipeline_options import PipelineOptions
 from google.cloud import storage
 import argparse
 import subprocess
@@ -38,7 +38,11 @@ class PipelineDeployer:
         self.config = self._load_config(config_path)[environment]
         
         # Initialize clients
-        self.dataflow_client = dataflow.JobsV1Beta3Client()
+        self.pipeline_options = PipelineOptions(
+            project=project_id,
+            region=self.config.get("region", "us-central1"),
+            runner="DataflowRunner"
+        )
         self.storage_client = storage.Client(project=project_id)
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
@@ -128,14 +132,14 @@ class PipelineDeployer:
             }
         }
 
-        request = dataflow.LaunchTemplateRequest(
-            project_id=self.project_id,
+        request = beam.PipelineOptions(
+            project=self.project_id,
             gcs_path=package_path,
             location=self.config["region"],
             launch_parameters=job
         )
 
-        response = self.dataflow_client.launch_template(request=request)
+        response = beam.Pipeline(request=request)
         return response.job.id
 
     def _wait_for_job(self, job_id: str, timeout: int = 300) -> None:
@@ -147,7 +151,7 @@ class PipelineDeployer:
         """
         start_time = time.time()
         while time.time() - start_time < timeout:
-            job = self.dataflow_client.get_job(
+            job = self.pipeline_options.get_job(
                 project_id=self.project_id,
                 location=self.config["region"],
                 job_id=job_id
