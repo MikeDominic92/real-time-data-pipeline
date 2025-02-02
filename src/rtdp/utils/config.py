@@ -1,10 +1,11 @@
 """Configuration management utilities."""
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 import yaml
+from apache_beam.options.pipeline_options import PipelineOptions
 from google.cloud import bigquery
 
 
@@ -28,6 +29,25 @@ class PipelineConfig:
     # Pipeline settings
     batch_size: int = 100
     streaming: bool = True
+    pipeline_options: PipelineOptions = field(default_factory=lambda: PipelineOptions())
+
+    @property
+    def subscription_path(self) -> str:
+        """Get the full Pub/Sub subscription path.
+
+        Returns:
+            Full subscription path.
+        """
+        return f"projects/{self.project_id}/subscriptions/{self.subscription_id}"
+
+    @property
+    def topic_path(self) -> str:
+        """Get the full Pub/Sub topic path.
+
+        Returns:
+            Full topic path.
+        """
+        return f"projects/{self.project_id}/topics/{self.topic_id}"
 
     @classmethod
     def from_yaml(cls, path: str) -> "PipelineConfig":
@@ -50,6 +70,10 @@ class PipelineConfig:
         Returns:
             PipelineConfig instance.
         """
+        pipeline_options = PipelineOptions()
+        if os.getenv("PIPELINE_STREAMING", "true").lower() == "true":
+            pipeline_options.view_as(PipelineOptions).streaming = True
+
         return cls(
             project_id=os.getenv("GCP_PROJECT_ID", ""),
             region=os.getenv("GCP_REGION", "us-central1"),
@@ -59,6 +83,7 @@ class PipelineConfig:
             table_id=os.getenv("BIGQUERY_TABLE_ID", ""),
             batch_size=int(os.getenv("PIPELINE_BATCH_SIZE", "100")),
             streaming=os.getenv("PIPELINE_STREAMING", "true").lower() == "true",
+            pipeline_options=pipeline_options,
         )
 
     def to_dict(self) -> Dict[str, Any]:

@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import datetime
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 import apache_beam as beam
@@ -35,31 +36,90 @@ class ParseJsonDoFn(beam.DoFn):
             logging.error(f"Error processing message: {e}")
 
 
+class ValidateMessageDoFn(beam.DoFn):
+    """Validate message format and content."""
+
+    REQUIRED_FIELDS = {"event_id", "timestamp", "data", "metadata"}
+
+    def process(self, element: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
+        """Process and validate each message.
+
+        Args:
+            element: Message to validate.
+
+        Yields:
+            Validated message if it passes all checks.
+        """
+        try:
+            # Check required fields
+            if not all(field in element for field in self.REQUIRED_FIELDS):
+                logging.error(
+                    f"Message missing required fields. Required: {self.REQUIRED_FIELDS}, "
+                    f"Got: {set(element.keys())}"
+                )
+                return
+
+            # Validate timestamp format
+            try:
+                datetime.fromisoformat(element["timestamp"])
+            except (ValueError, TypeError) as e:
+                logging.error(f"Invalid timestamp format: {e}")
+                return
+
+            # Validate metadata
+            metadata = element.get("metadata", {})
+            if not isinstance(metadata, dict):
+                logging.error("Metadata must be a dictionary")
+                return
+
+            if "source" not in metadata or "version" not in metadata:
+                logging.error("Metadata missing required fields: source, version")
+                return
+
+            # Message passed all validations
+            yield element
+
+        except Exception as e:
+            logging.error(f"Error validating message: {e}")
+
+
 class DataPipeline:
     """Handles the creation and execution of the data processing pipeline."""
 
     def __init__(
         self,
-        project_id: str,
-        subscription_path: str,
-        dataset_id: str,
-        table_id: str,
-        pipeline_options: Optional[PipelineOptions] = None,
+        config: Any
     ) -> None:
         """Initialize the pipeline configuration.
 
         Args:
-            project_id: The GCP project ID.
-            subscription_path: The full path to the Pub/Sub subscription.
-            dataset_id: The BigQuery dataset ID.
-            table_id: The BigQuery table ID.
-            pipeline_options: Optional Apache Beam pipeline options.
+            config: Pipeline configuration object.
         """
-        self.project_id = project_id
-        self.subscription_path = subscription_path
-        self.dataset_id = dataset_id
-        self.table_id = table_id
-        self.pipeline_options = pipeline_options or PipelineOptions()
+        self.config = config
+
+    def apply_transforms(
+        self,
+        pcoll: beam.PCollection
+    ) -> beam.PCollection:
+        """Apply pipeline transformations.
+
+        Args:
+            pcoll: Input PCollection.
+
+        Returns:
+            Transformed PCollection.
+        """
+        return (
+            pcoll
+            | "Parse JSON" >> beam.ParDo(ParseJsonDoFn())
+            | "Validate Messages" >> beam.ParDo(ValidateMessageDoFn())
+            | "Add Processing Time" >> beam.Map(
+                lambda x: {
+                    **x,
+                    "processing_timestamp": datetime.now().isoformat()
+                }
+            )
+        )
 
     def build_pipeline(self) -> beam.Pipeline:
         """Build the data processing pipeline.
@@ -67,20 +127,22 @@ class DataPipeline:
         Returns:
             An Apache Beam Pipeline object.
         """
-        pipeline = beam.Pipeline(options=self.pipeline_options)
+        pipeline = beam.Pipeline(options=self.config.pipeline_options)
 
         # Read from Pub/Sub
         messages = (
             pipeline
             | "Read from Pub/Sub" >> beam.io.ReadFromPubSub(
-                subscription=self.subscription_path
+                subscription=self.config.subscription_path
             )
-            | "Parse JSON" >> beam.ParDo(ParseJsonDoFn())
         )
 
+        # Apply pipeline transformations
+        transformed_messages = self.apply_transforms(messages)
+
         # Write to BigQuery
-        table_spec = f"{self.project_id}:{self.dataset_id}.{self.table_id}"
-        messages | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        table_spec = f"{self.config.project_id}:{self.config.dataset_id}.{self.config.table_id}"
+        transformed_messages | "Write to BigQuery" >> beam.io.WriteToBigQuery(
             table_spec,
             write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
             create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
