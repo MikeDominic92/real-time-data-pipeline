@@ -42,6 +42,11 @@ jobs:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
 
+    - name: Build distribution package
+      run: |
+        python setup.py sdist
+        ls dist/  # List contents for debugging
+
     - name: Deploy application
       run: |
         python scripts/deploy.py \

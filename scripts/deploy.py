@@ -70,17 +70,16 @@ class PipelineDeployer:
         if not bucket.exists():
             bucket.create()
 
+        # Find the first .tar.gz file in dist directory
+        dist_files = [f for f in os.listdir("dist") if f.endswith(".tar.gz")]
+        if not dist_files:
+            raise FileNotFoundError("No .tar.gz distribution package found in dist/ directory")
+        
+        dist_file = os.path.join("dist", dist_files[0])
         blob_name = f"rtdp-{self.version}.tar.gz"
         blob = bucket.blob(blob_name)
 
-        # Create package
-        subprocess.run(
-            ["python", "setup.py", "sdist", "--formats=gztar"],
-            check=True
-        )
-
         # Upload package
-        dist_file = f"dist/rtdp-{self.version}.tar.gz"
         blob.upload_from_filename(dist_file)
 
         return f"gs://{bucket_name}/{blob_name}"
