@@ -62,11 +62,11 @@ def test_config() -> PipelineConfig:
 
 
 @pytest.fixture
-def mock_publisher_client(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_publisher_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, None, None]:
     """Mock the Pub/Sub publisher client."""
     class MockPublisherClient:
         def __init__(self) -> None:
-            self.published_messages: list = []
+            self.published_messages = []
 
         def topic_path(self, project_id: str, topic_id: str) -> str:
             """Create a topic path."""
@@ -77,7 +77,7 @@ def mock_publisher_client(monkeypatch: pytest.MonkeyPatch) -> None:
             topic: str,
             data: bytes,
             **kwargs: Any
-        ) -> None:
+        ) -> str:
             """Mock publish method."""
             self.published_messages.append({
                 "topic": topic,
@@ -86,16 +86,18 @@ def mock_publisher_client(monkeypatch: pytest.MonkeyPatch) -> None:
             })
             return "message-id"
 
-    monkeypatch.setattr(pubsub_v1, "PublisherClient", MockPublisherClient)
+    client = MockPublisherClient()
+    monkeypatch.setattr(pubsub_v1, "PublisherClient", lambda: client)
+    yield client
 
 
 @pytest.fixture
-def mock_bigquery_client(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_bigquery_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, None, None]:
     """Mock the BigQuery client."""
     class MockBigQueryClient:
         def __init__(self) -> None:
-            self.inserted_rows: list = []
-            self.queries: list = []
+            self.inserted_rows = []
+            self.queries = []
 
         def get_table(self, table_ref: str) -> Any:
             """Mock get_table method."""
@@ -103,42 +105,14 @@ def mock_bigquery_client(monkeypatch: pytest.MonkeyPatch) -> None:
 
         def insert_rows_json(
             self,
-            table: Any,
-            json_rows: list
+            table: str,
+            json_rows: list,
+            **kwargs: Any
         ) -> list:
             """Mock insert_rows_json method."""
             self.inserted_rows.extend(json_rows)
             return []
 
-        def query(self, query: str) -> Any:
-            """Mock query method."""
-            self.queries.append(query)
-            return MockQueryJob()
-
-    class MockQueryJob:
-        def result(self) -> list:
-            """Mock result method."""
-            return []
-
-    monkeypatch.setattr(bigquery, "Client", MockBigQueryClient)
-
-
-@pytest.fixture
-def temp_env_vars(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
-    """Set temporary environment variables for testing."""
-    env_vars = {
-        "GCP_PROJECT_ID": "test-project",
-        "GCP_REGION": "us-central1",
-        "PUBSUB_TOPIC_ID": "test-topic",
-        "PUBSUB_SUBSCRIPTION_ID": "test-subscription",
-        "BIGQUERY_DATASET_ID": "test_dataset",
-        "BIGQUERY_TABLE_ID": "test_table",
-    }
-
-    for key, value in env_vars.items():
-        monkeypatch.setenv(key, value)
-
-    yield
-
-    for key in env_vars:
-        monkeypatch.delenv(key, raising=False)
+    client = MockBigQueryClient()
+    monkeypatch.setattr(bigquery, "Client", lambda: client)
+    yield client
