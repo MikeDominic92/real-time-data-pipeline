@@ -22,9 +22,7 @@ def test_publisher_initialization(test_config: Any) -> None:
 
 
 def test_publish_message(
-    mock_publisher_client: None,
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    mock_publisher_client: None, test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test publishing a message."""
     publisher = DataPublisher(
@@ -33,10 +31,7 @@ def test_publish_message(
     )
 
     # Publish a message
-    future = publisher.publish(
-        data=sample_message_data,
-        ordering_key="test-key"
-    )
+    future = publisher.publish(data=sample_message_data, ordering_key="test-key")
 
     # Verify the message was published
     assert future == "message-id"
@@ -47,9 +42,7 @@ def test_publish_message(
 
 
 def test_publish_message_with_attributes(
-    mock_publisher_client: None,
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    mock_publisher_client: None, test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test publishing a message with additional attributes."""
     publisher = DataPublisher(
@@ -58,16 +51,11 @@ def test_publish_message_with_attributes(
     )
 
     # Additional attributes
-    attributes = {
-        "source": "test-source",
-        "environment": "test"
-    }
+    attributes = {"source": "test-source", "environment": "test"}
 
     # Publish a message with attributes
     future = publisher.publish(
-        data=sample_message_data,
-        ordering_key="test-key",
-        **attributes
+        data=sample_message_data, ordering_key="test-key", **attributes
     )
 
     # Verify the message was published with attributes
@@ -78,9 +66,7 @@ def test_publish_message_with_attributes(
 
 
 def test_publish_message_with_batch_settings(
-    mock_publisher_client: None,
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    mock_publisher_client: None, test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test publishing with batch settings."""
     batch_settings = {
@@ -100,10 +86,7 @@ def test_publish_message_with_batch_settings(
     assert future == "message-id"
 
 
-def test_close_publisher(
-    mock_publisher_client: None,
-    test_config: Any
-) -> None:
+def test_close_publisher(mock_publisher_client: None, test_config: Any) -> None:
     """Test closing the publisher."""
     publisher = DataPublisher(
         project_id=test_config.project_id,

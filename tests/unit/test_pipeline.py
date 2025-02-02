@@ -15,6 +15,7 @@ from rtdp.processor.pipeline import DataPipeline, ParseJsonDoFn, ValidateMessage
 @pytest.fixture
 def test_pipeline():
     from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
+
     options = PipelineOptions()
     options.view_as(StandardOptions).streaming = True
     return TestPipeline(options=options)
@@ -24,11 +25,7 @@ def test_parse_json_dofn(test_pipeline, sample_message_data: Dict[str, Any]) -> 
     """Test JSON parsing transformation."""
     with test_pipeline as p:
         input_data = [json.dumps(sample_message_data).encode("utf-8")]
-        output = (
-            p
-            | beam.Create(input_data)
-            | beam.ParDo(ParseJsonDoFn())
-        )
+        output = p | beam.Create(input_data) | beam.ParDo(ParseJsonDoFn())
 
         assert_that(output, equal_to([sample_message_data]))
 
@@ -37,9 +34,7 @@ def test_validate_message_dofn(sample_message_data: Dict[str, Any]) -> None:
     """Test message validation transformation."""
     with test_pipeline() as p:
         output = (
-            p
-            | beam.Create([sample_message_data])
-            | beam.ParDo(ValidateMessageDoFn())
+            p | beam.Create([sample_message_data]) | beam.ParDo(ValidateMessageDoFn())
         )
 
         # The validation should pass and output the same message
@@ -48,16 +43,10 @@ def test_validate_message_dofn(sample_message_data: Dict[str, Any]) -> None:
 
 def test_validate_message_dofn_invalid_message() -> None:
     """Test message validation with invalid message."""
-    invalid_message = {
-        "invalid": "message"
-    }
+    invalid_message = {"invalid": "message"}
 
     with test_pipeline() as p:
-        output = (
-            p
-            | beam.Create([invalid_message])
-            | beam.ParDo(ValidateMessageDoFn())
-        )
+        output = p | beam.Create([invalid_message]) | beam.ParDo(ValidateMessageDoFn())
 
         # Invalid message should be filtered out
         assert_that(output, equal_to([]))
@@ -70,8 +59,7 @@ def test_pipeline_creation(test_config: Any) -> None:
 
 
 def test_pipeline_transforms(
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test pipeline transformations."""
     pipeline = DataPipeline(config=test_config)
@@ -81,9 +69,7 @@ def test_pipeline_transforms(
         input_data = [json.dumps(sample_message_data).encode("utf-8")]
 
         # Apply pipeline transforms
-        output = pipeline.apply_transforms(
-            p | beam.Create(input_data)
-        )
+        output = pipeline.apply_transforms(p | beam.Create(input_data))
 
         def check_output(elements: list) -> None:
             """Check output elements."""
@@ -106,8 +92,7 @@ def test_pipeline_transforms(
 
 
 def test_pipeline_with_windowing(
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test pipeline with windowing transforms."""
     pipeline = DataPipeline(config=test_config)
@@ -116,7 +101,7 @@ def test_pipeline_with_windowing(
         # Create sample input
         input_data = [
             json.dumps(sample_message_data).encode("utf-8"),
-            json.dumps(sample_message_data).encode("utf-8")
+            json.dumps(sample_message_data).encode("utf-8"),
         ]
 
         # Apply pipeline transforms with windowing
@@ -139,8 +124,7 @@ def test_pipeline_with_windowing(
 
 
 def test_pipeline_error_handling(
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test pipeline error handling."""
     pipeline = DataPipeline(config=test_config)
@@ -150,13 +134,11 @@ def test_pipeline_error_handling(
         input_data = [
             json.dumps(sample_message_data).encode("utf-8"),
             b"invalid json",
-            json.dumps({"invalid": "message"}).encode("utf-8")
+            json.dumps({"invalid": "message"}).encode("utf-8"),
         ]
 
         # Apply pipeline transforms
-        output = pipeline.apply_transforms(
-            p | beam.Create(input_data)
-        )
+        output = pipeline.apply_transforms(p | beam.Create(input_data))
 
         # Only valid messages should pass through
         def check_error_handling(elements: list) -> None:
@@ -174,5 +156,5 @@ sample_message_data = {
     "event_id": "12345",
     "timestamp": "2022-01-01T12:00:00",
     "data": {"key": "value"},
-    "metadata": {"source": "test", "version": "1.0"}
+    "metadata": {"source": "test", "version": "1.0"},
 }

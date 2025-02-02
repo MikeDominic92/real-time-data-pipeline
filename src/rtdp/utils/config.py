@@ -64,27 +64,39 @@ class PipelineConfig:
         self.table_id = table_id
         self.batch_size = batch_size
         self.streaming = streaming
-        
+
         # Set up pipeline options
         self.pipeline_options = pipeline_options or PipelineOptions()
         if self.streaming:
             standard_options = self.pipeline_options.view_as(StandardOptions)
             standard_options.streaming = True
-        
+
         # Set up default schema if none provided
         if schema is None:
             self.schema = [
                 bigquery.SchemaField("event_id", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("timestamp", "TIMESTAMP", mode="REQUIRED"),
-                bigquery.SchemaField("processing_timestamp", "TIMESTAMP", mode="REQUIRED"),
-                bigquery.SchemaField("data", "RECORD", mode="REQUIRED", fields=[
-                    bigquery.SchemaField("key1", "STRING", mode="NULLABLE"),
-                    bigquery.SchemaField("key2", "STRING", mode="NULLABLE"),
-                ]),
-                bigquery.SchemaField("metadata", "RECORD", mode="REQUIRED", fields=[
-                    bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
-                    bigquery.SchemaField("version", "STRING", mode="REQUIRED"),
-                ]),
+                bigquery.SchemaField(
+                    "processing_timestamp", "TIMESTAMP", mode="REQUIRED"
+                ),
+                bigquery.SchemaField(
+                    "data",
+                    "RECORD",
+                    mode="REQUIRED",
+                    fields=[
+                        bigquery.SchemaField("key1", "STRING", mode="NULLABLE"),
+                        bigquery.SchemaField("key2", "STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    "metadata",
+                    "RECORD",
+                    mode="REQUIRED",
+                    fields=[
+                        bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
+                        bigquery.SchemaField("version", "STRING", mode="REQUIRED"),
+                    ],
+                ),
             ]
         else:
             self.schema = schema

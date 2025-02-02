@@ -33,7 +33,7 @@ class BigQueryClient:
         """Create the BigQuery dataset if it doesn't exist."""
         dataset = bigquery.Dataset(f"{self.client.project}.{self.dataset_id}")
         dataset.location = "US"  # Specify the location
-        
+
         try:
             dataset = self.client.create_dataset(dataset, exists_ok=True)
             print(f"Dataset {self.dataset_id} created or already exists.")
@@ -47,7 +47,7 @@ class BigQueryClient:
             raise ValueError("Schema is required for table creation")
 
         table = bigquery.Table(self.table_ref, schema=self.schema)
-        
+
         try:
             table = self.client.create_table(table, exists_ok=True)
             print(f"Table {self.table_id} created or already exists.")
@@ -66,10 +66,10 @@ class BigQueryClient:
         """
         table = self.client.get_table(self.table_ref)
         errors = self.client.insert_rows_json(table, rows)
-        
+
         if errors:
             print(f"Encountered errors while inserting rows: {errors}")
-        
+
         return errors
 
     def query(self, query: str) -> bigquery.table.RowIterator:

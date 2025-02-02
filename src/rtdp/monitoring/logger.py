@@ -13,7 +13,7 @@ from google.cloud.logging_v2.handlers.transports.sync import SyncTransport
 
 class PipelineLogger:
     """Custom logger for the Real-Time Data Pipeline.
-    
+
     Supports both local logging and Cloud Logging with structured logs.
     """
 
@@ -23,10 +23,10 @@ class PipelineLogger:
         project_id: str,
         level: str = "INFO",
         use_cloud_logging: bool = True,
-        log_file: Optional[str] = None
+        log_file: Optional[str] = None,
     ) -> None:
         """Initialize the logger.
-        
+
         Args:
             name: Logger name
             project_id: GCP project ID
@@ -60,33 +60,24 @@ class PipelineLogger:
 
     def _get_formatter(self) -> logging.Formatter:
         """Get log formatter."""
-        return logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        return logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     def _setup_cloud_logging(self) -> None:
         """Set up Google Cloud Logging."""
         client = cloud_logging.Client(project=self.project_id)
-        handler = CloudLoggingHandler(
-            client,
-            name=self.name,
-            transport=SyncTransport
-        )
+        handler = CloudLoggingHandler(client, name=self.name, transport=SyncTransport)
         self.logger.addHandler(handler)
 
     def _format_structured_log(
-        self,
-        message: str,
-        severity: str,
-        **kwargs: Any
+        self, message: str, severity: str, **kwargs: Any
     ) -> Dict[str, Any]:
         """Format structured log entry.
-        
+
         Args:
             message: Log message
             severity: Log severity
             **kwargs: Additional log fields
-            
+
         Returns:
             Structured log entry
         """
@@ -99,25 +90,18 @@ class PipelineLogger:
         log_entry.update(kwargs)
         return log_entry
 
-    def log(
-        self,
-        severity: str,
-        message: str,
-        **kwargs: Any
-    ) -> None:
+    def log(self, severity: str, message: str, **kwargs: Any) -> None:
         """Log a message with structured data.
-        
+
         Args:
             severity: Log severity
             message: Log message
             **kwargs: Additional log fields
         """
         structured_log = self._format_structured_log(
-            message=message,
-            severity=severity,
-            **kwargs
+            message=message, severity=severity, **kwargs
         )
-        
+
         log_message = json.dumps(structured_log)
         getattr(self.logger, severity.lower())(log_message)
 
@@ -147,7 +131,7 @@ class PipelineLogger:
         kwargs["exc_info"] = {
             "type": str(exc_info[0]),
             "value": str(exc_info[1]),
-            "traceback": self._format_traceback(exc_info[2])
+            "traceback": self._format_traceback(exc_info[2]),
         }
         self.log("ERROR", message, **kwargs)
 
@@ -155,4 +139,5 @@ class PipelineLogger:
     def _format_traceback(tb: Any) -> str:
         """Format traceback for structured logging."""
         import traceback
+
         return "".join(traceback.format_tb(tb))

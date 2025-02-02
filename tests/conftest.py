@@ -17,20 +17,15 @@ def sample_message_data() -> Dict[str, Any]:
     return {
         "event_id": "test-event-123",
         "timestamp": "2025-02-01T18:47:36-05:00",
-        "data": {
-            "key1": "value1",
-            "key2": "value2"
-        },
-        "metadata": {
-            "source": "test-source",
-            "version": "1.0"
-        }
+        "data": {"key1": "value1", "key2": "value2"},
+        "metadata": {"source": "test-source", "version": "1.0"},
     }
 
 
 @pytest.fixture
 def mock_pubsub_message(sample_message_data: Dict[str, Any]) -> Message:
     """Create a mock Pub/Sub message."""
+
     class MockPubSubMessage:
         def __init__(self, data: Dict[str, Any]):
             self.data = json.dumps(data).encode("utf-8")
@@ -50,12 +45,12 @@ def mock_pubsub_message(sample_message_data: Dict[str, Any]) -> Message:
 def test_config() -> PipelineConfig:
     """Test configuration."""
     from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
-    
+
     # Create pipeline options for testing
     pipeline_options = PipelineOptions()
     standard_options = pipeline_options.view_as(StandardOptions)
     standard_options.streaming = True
-    
+
     return PipelineConfig(
         project_id="test-project",
         region="us-central1",
@@ -65,7 +60,7 @@ def test_config() -> PipelineConfig:
         table_id="test_table",
         batch_size=10,
         streaming=True,
-        pipeline_options=pipeline_options
+        pipeline_options=pipeline_options,
     )
 
 
@@ -73,17 +68,20 @@ def test_config() -> PipelineConfig:
 def mock_publisher_client(monkeypatch):
     class MockPublisher:
         def topic_path(self, project, topic):
-            return f'projects/{project}/topics/{topic}'
+            return f"projects/{project}/topics/{topic}"
+
         def publish(self, topic, data, **kwargs):
-            return 'mock-message-id'
+            return "mock-message-id"
+
     client = MockPublisher()
-    monkeypatch.setattr('google.cloud.pubsub_v1.PublisherClient', lambda: client)
+    monkeypatch.setattr("google.cloud.pubsub_v1.PublisherClient", lambda: client)
     return client
 
 
 @pytest.fixture
 def mock_bigquery_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, None, None]:
     """Mock the BigQuery client."""
+
     class MockBigQueryClient:
         def __init__(self) -> None:
             self.inserted_rows = []
@@ -93,14 +91,9 @@ def mock_bigquery_client(monkeypatch: pytest.MonkeyPatch) -> Generator[Any, None
             """Mock get_table method."""
             return None
 
-        def insert_rows_json(
-            self,
-            table: str,
-            json_rows: list,
-            **kwargs: Any
-        ) -> list:
+        def insert_rows_json(self, table: str, json_rows: list, **kwargs: Any) -> list:
             """Mock insert_rows_json method.
-            
+
             Args:
                 table: Table reference.
                 json_rows: Rows to insert.

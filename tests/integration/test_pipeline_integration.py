@@ -25,19 +25,18 @@ def integration_config() -> Generator[PipelineConfig, None, None]:
         dataset_id="test_dataset_integration",
         table_id="test_table_integration",
         batch_size=10,
-        streaming=True
+        streaming=True,
     )
     yield config
 
 
 @pytest.fixture(scope="module")
 def publisher_client(
-    integration_config: PipelineConfig
+    integration_config: PipelineConfig,
 ) -> Generator[DataPublisher, None, None]:
     """Create a publisher client for integration tests."""
     publisher = DataPublisher(
-        project_id=integration_config.project_id,
-        topic_id=integration_config.topic_id
+        project_id=integration_config.project_id, topic_id=integration_config.topic_id
     )
     yield publisher
     publisher.close()
@@ -45,13 +44,13 @@ def publisher_client(
 
 @pytest.fixture(scope="module")
 def bigquery_client(
-    integration_config: PipelineConfig
+    integration_config: PipelineConfig,
 ) -> Generator[BigQueryClient, None, None]:
     """Create a BigQuery client for integration tests."""
     client = BigQueryClient(
         project_id=integration_config.project_id,
         dataset_id=integration_config.dataset_id,
-        table_id=integration_config.table_id
+        table_id=integration_config.table_id,
     )
     yield client
 
@@ -60,21 +59,21 @@ def test_end_to_end_pipeline(
     integration_config: PipelineConfig,
     publisher_client: DataPublisher,
     bigquery_client: BigQueryClient,
-    sample_message_data: Dict[str, Any]
+    sample_message_data: Dict[str, Any],
 ) -> None:
     """Test the entire pipeline from publishing to storage."""
     # 1. Publish messages
     message_count = 5
     published_messages = []
-    
+
     for i in range(message_count):
         message = dict(sample_message_data)
         message["event_id"] = f"test-event-{i}"
         message["timestamp"] = datetime.now().isoformat()
-        
+
         future = publisher_client.publish(message)
         published_messages.append(message)
-        
+
         # Wait for message to be published
         future.result()
 
@@ -88,7 +87,7 @@ def test_end_to_end_pipeline(
     WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 MINUTE)
     """
     results = bigquery_client.query(query)
-    
+
     assert len(results) == 1
     assert results[0]["count"] >= message_count
 
@@ -96,7 +95,7 @@ def test_end_to_end_pipeline(
 def test_pipeline_error_recovery(
     integration_config: PipelineConfig,
     publisher_client: DataPublisher,
-    bigquery_client: BigQueryClient
+    bigquery_client: BigQueryClient,
 ) -> None:
     """Test pipeline recovery from errors."""
     # 1. Publish invalid message
@@ -108,7 +107,7 @@ def test_pipeline_error_recovery(
         "event_id": "recovery-test",
         "timestamp": datetime.now().isoformat(),
         "data": {"key": "value"},
-        "metadata": {"source": "test"}
+        "metadata": {"source": "test"},
     }
     publisher_client.publish(valid_message)
 
@@ -122,7 +121,7 @@ def test_pipeline_error_recovery(
     WHERE event_id = 'recovery-test'
     """
     results = bigquery_client.query(query)
-    
+
     assert len(results) == 1
     assert results[0]["event_id"] == "recovery-test"
 
@@ -131,13 +130,13 @@ def test_pipeline_performance(
     integration_config: PipelineConfig,
     publisher_client: DataPublisher,
     bigquery_client: BigQueryClient,
-    sample_message_data: Dict[str, Any]
+    sample_message_data: Dict[str, Any],
 ) -> None:
     """Test pipeline performance with batch processing."""
     # 1. Prepare batch of messages
     batch_size = 100
     messages = []
-    
+
     for i in range(batch_size):
         message = dict(sample_message_data)
         message["event_id"] = f"perf-test-{i}"
@@ -146,10 +145,10 @@ def test_pipeline_performance(
 
     # 2. Measure publishing time
     start_time = time.time()
-    
+
     for message in messages:
         publisher_client.publish(message)
-    
+
     publish_time = time.time() - start_time
 
     # 3. Wait for processing
@@ -163,7 +162,7 @@ def test_pipeline_performance(
     AND timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 MINUTE)
     """
     results = bigquery_client.query(query)
-    
+
     assert len(results) == 1
     assert results[0]["count"] >= batch_size
     assert publish_time < 10  # Publishing should take less than 10 seconds
@@ -173,7 +172,7 @@ def test_pipeline_data_consistency(
     integration_config: PipelineConfig,
     publisher_client: DataPublisher,
     bigquery_client: BigQueryClient,
-    sample_message_data: Dict[str, Any]
+    sample_message_data: Dict[str, Any],
 ) -> None:
     """Test data consistency across the pipeline."""
     # 1. Create message with specific test data
@@ -195,10 +194,10 @@ def test_pipeline_data_consistency(
     WHERE event_id = 'consistency-test'
     """
     results = bigquery_client.query(query)
-    
+
     assert len(results) == 1
     result = results[0]
-    
+
     # Verify all fields are preserved
     assert result["event_id"] == test_data["event_id"]
     assert result["timestamp"] == test_data["timestamp"]

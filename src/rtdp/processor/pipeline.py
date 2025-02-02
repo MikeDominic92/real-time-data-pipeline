@@ -12,7 +12,11 @@ from apache_beam.options.pipeline_options import PipelineOptions
 class ParseJsonDoFn(beam.DoFn):
     """Parse JSON messages from Pub/Sub."""
 
-    def process(self, element: bytes, timestamp: beam.DoFn.TimestampParam = beam.DoFn.TimestampParam) -> Iterator[Dict[str, Any]]:
+    def process(
+        self,
+        element: bytes,
+        timestamp: beam.DoFn.TimestampParam = beam.DoFn.TimestampParam,
+    ) -> Iterator[Dict[str, Any]]:
         """Process each Pub/Sub message.
 
         Args:
@@ -25,10 +29,10 @@ class ParseJsonDoFn(beam.DoFn):
         try:
             # Decode and parse JSON message
             message: Dict[str, Any] = json.loads(element.decode("utf-8"))
-            
+
             # Add processing timestamp
             message["processing_timestamp"] = timestamp.to_utc_datetime().isoformat()
-            
+
             yield message
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse JSON message: {e}")
@@ -86,10 +90,7 @@ class ValidateMessageDoFn(beam.DoFn):
 class DataPipeline:
     """Handles the creation and execution of the data processing pipeline."""
 
-    def __init__(
-        self,
-        config: Any
-    ) -> None:
+    def __init__(self, config: Any) -> None:
         """Initialize the pipeline configuration.
 
         Args:
@@ -97,10 +98,7 @@ class DataPipeline:
         """
         self.config = config
 
-    def apply_transforms(
-        self,
-        pcoll: beam.PCollection
-    ) -> beam.PCollection:
+    def apply_transforms(self, pcoll: beam.PCollection) -> beam.PCollection:
         """Apply pipeline transformations.
 
         Args:
@@ -126,16 +124,17 @@ class DataPipeline:
         # Read from Pub/Sub
         messages: beam.PCollection = (
             pipeline
-            | "Read from Pub/Sub" >> beam.io.ReadFromPubSub(
-                subscription=self.config.subscription_path
-            )
+            | "Read from Pub/Sub"
+            >> beam.io.ReadFromPubSub(subscription=self.config.subscription_path)
         )
 
         # Apply pipeline transformations
         transformed_messages: beam.PCollection = self.apply_transforms(messages)
 
         # Write to BigQuery
-        table_spec: str = f"{self.config.project_id}:{self.config.dataset_id}.{self.config.table_id}"
+        table_spec: str = (
+            f"{self.config.project_id}:{self.config.dataset_id}.{self.config.table_id}"
+        )
         transformed_messages | "Write to BigQuery" >> beam.io.WriteToBigQuery(
             table_spec,
             schema=self.config.schema,

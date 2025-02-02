@@ -12,12 +12,10 @@ class AlertManager:
     """Manage alerts for the Real-Time Data Pipeline."""
 
     def __init__(
-        self,
-        project_id: str,
-        notification_channels: Optional[List[str]] = None
+        self, project_id: str, notification_channels: Optional[List[str]] = None
     ) -> None:
         """Initialize alert manager.
-        
+
         Args:
             project_id: GCP project ID
             notification_channels: List of notification channel names
@@ -36,10 +34,10 @@ class AlertManager:
         threshold_value: Union[int, float],
         comparison: str,
         description: str = "",
-        documentation: Optional[Dict[str, str]] = None
+        documentation: Optional[Dict[str, str]] = None,
     ) -> AlertPolicy:
         """Create a new alert policy.
-        
+
         Args:
             display_name: Alert policy display name
             filter_str: Metric filter string
@@ -49,7 +47,7 @@ class AlertManager:
             comparison: Comparison type
             description: Optional alert description
             documentation: Optional documentation
-            
+
         Returns:
             Created alert policy
         """
@@ -66,8 +64,7 @@ class AlertManager:
                 filter=filter_str,
                 duration=duration_pb,
                 comparison=getattr(
-                    monitoring_v3.AlertPolicy.Condition.ComparisonType,
-                    comparison
+                    monitoring_v3.AlertPolicy.Condition.ComparisonType, comparison
                 ),
                 threshold_value=threshold_value,
                 aggregations=[
@@ -85,10 +82,14 @@ class AlertManager:
             conditions=[condition],
             combiner=monitoring_v3.AlertPolicy.ConditionCombinerType.AND,
             notification_channels=self.notification_channels,
-            documentation=monitoring_v3.AlertPolicy.Documentation(
-                content=description,
-                mime_type="text/markdown",
-            ) if description else None,
+            documentation=(
+                monitoring_v3.AlertPolicy.Documentation(
+                    content=description,
+                    mime_type="text/markdown",
+                )
+                if description
+                else None
+            ),
         )
 
         if documentation:
@@ -106,16 +107,16 @@ class AlertManager:
         metric_type: str,
         threshold_seconds: float,
         duration_seconds: int = 300,
-        alignment_period_seconds: int = 60
+        alignment_period_seconds: int = 60,
     ) -> AlertPolicy:
         """Create a latency alert policy.
-        
+
         Args:
             metric_type: Type of latency metric
             threshold_seconds: Latency threshold in seconds
             duration_seconds: Duration for condition evaluation
             alignment_period_seconds: Alignment period in seconds
-            
+
         Returns:
             Created alert policy
         """
@@ -138,9 +139,9 @@ class AlertManager:
                 "recommended_actions": [
                     "Check system resources",
                     "Verify upstream dependencies",
-                    "Scale processing resources if needed"
-                ]
-            }
+                    "Scale processing resources if needed",
+                ],
+            },
         )
 
     def create_error_rate_alert(
@@ -148,16 +149,16 @@ class AlertManager:
         metric_type: str,
         threshold_rate: float,
         duration_seconds: int = 300,
-        alignment_period_seconds: int = 60
+        alignment_period_seconds: int = 60,
     ) -> AlertPolicy:
         """Create an error rate alert policy.
-        
+
         Args:
             metric_type: Type of error metric
             threshold_rate: Error rate threshold (0-1)
             duration_seconds: Duration for condition evaluation
             alignment_period_seconds: Alignment period in seconds
-            
+
         Returns:
             Created alert policy
         """
@@ -180,9 +181,9 @@ class AlertManager:
                 "recommended_actions": [
                     "Check error logs",
                     "Verify system configuration",
-                    "Check data quality"
-                ]
-            }
+                    "Check data quality",
+                ],
+            },
         )
 
     def create_throughput_alert(
@@ -190,16 +191,16 @@ class AlertManager:
         metric_type: str,
         min_throughput: int,
         duration_seconds: int = 300,
-        alignment_period_seconds: int = 60
+        alignment_period_seconds: int = 60,
     ) -> AlertPolicy:
         """Create a throughput alert policy.
-        
+
         Args:
             metric_type: Type of throughput metric
             min_throughput: Minimum expected throughput
             duration_seconds: Duration for condition evaluation
             alignment_period_seconds: Alignment period in seconds
-            
+
         Returns:
             Created alert policy
         """
@@ -222,14 +223,14 @@ class AlertManager:
                 "recommended_actions": [
                     "Check input data flow",
                     "Verify processing capacity",
-                    "Check for bottlenecks"
-                ]
-            }
+                    "Check for bottlenecks",
+                ],
+            },
         )
 
     def delete_alert_policy(self, policy_name: str) -> None:
         """Delete an alert policy.
-        
+
         Args:
             policy_name: Name of the alert policy to delete
         """
@@ -237,26 +238,22 @@ class AlertManager:
 
     def list_alert_policies(self) -> List[AlertPolicy]:
         """List all alert policies.
-        
+
         Returns:
             List of alert policies
         """
         return list(self.client.list_alert_policies(name=self.project_name))
 
     def update_alert_policy(
-        self,
-        policy_name: str,
-        alert_policy: AlertPolicy
+        self, policy_name: str, alert_policy: AlertPolicy
     ) -> AlertPolicy:
         """Update an alert policy.
-        
+
         Args:
             policy_name: Name of the alert policy to update
             alert_policy: Updated alert policy
-            
+
         Returns:
             Updated alert policy
         """
-        return self.client.update_alert_policy(
-            alert_policy=alert_policy
-        )
+        return self.client.update_alert_policy(alert_policy=alert_policy)

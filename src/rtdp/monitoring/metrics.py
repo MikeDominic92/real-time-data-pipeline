@@ -13,12 +13,10 @@ class MetricsCollector:
     """Collect and report metrics to Cloud Monitoring."""
 
     def __init__(
-        self,
-        project_id: str,
-        metric_prefix: str = "custom.googleapis.com/rtdp"
+        self, project_id: str, metric_prefix: str = "custom.googleapis.com/rtdp"
     ) -> None:
         """Initialize metrics collector.
-        
+
         Args:
             project_id: GCP project ID
             metric_prefix: Prefix for custom metrics
@@ -34,10 +32,10 @@ class MetricsCollector:
         value: float,
         metric_kind: str,
         value_type: str,
-        labels: Optional[Dict[str, str]] = None
+        labels: Optional[Dict[str, str]] = None,
     ) -> None:
         """Create a new time series in Cloud Monitoring.
-        
+
         Args:
             metric_type: Type of metric to create
             value: Metric value
@@ -47,7 +45,7 @@ class MetricsCollector:
         """
         series = monitoring_v3.TimeSeries()
         series.metric.type = f"{self.metric_prefix}/{metric_type}"
-        
+
         if labels:
             series.metric.labels.update(labels)
 
@@ -60,35 +58,27 @@ class MetricsCollector:
 
         # Create the data point
         point = series.points.add()
-        
+
         if value_type == "INT64":
             point.value.int64_value = int(value)
         elif value_type == "DOUBLE":
             point.value.double_value = float(value)
         elif value_type == "BOOL":
             point.value.bool_value = bool(value)
-        
+
         now = time.time()
         point.interval.end_time.seconds = int(now)
-        point.interval.end_time.nanos = int(
-            (now - int(now)) * 10**9
-        )
+        point.interval.end_time.nanos = int((now - int(now)) * 10**9)
 
         self.client.create_time_series(
-            request={
-                "name": self.project_path,
-                "time_series": [series]
-            }
+            request={"name": self.project_path, "time_series": [series]}
         )
 
     def record_counter(
-        self,
-        name: str,
-        value: int = 1,
-        labels: Optional[Dict[str, str]] = None
+        self, name: str, value: int = 1, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Record a counter metric.
-        
+
         Args:
             name: Metric name
             value: Counter value
@@ -99,17 +89,14 @@ class MetricsCollector:
             value=value,
             metric_kind="CUMULATIVE",
             value_type="INT64",
-            labels=labels
+            labels=labels,
         )
 
     def record_gauge(
-        self,
-        name: str,
-        value: float,
-        labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Record a gauge metric.
-        
+
         Args:
             name: Metric name
             value: Gauge value
@@ -120,17 +107,14 @@ class MetricsCollector:
             value=value,
             metric_kind="GAUGE",
             value_type="DOUBLE",
-            labels=labels
+            labels=labels,
         )
 
     def record_latency(
-        self,
-        name: str,
-        latency: float,
-        labels: Optional[Dict[str, str]] = None
+        self, name: str, latency: float, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Record a latency metric.
-        
+
         Args:
             name: Metric name
             latency: Latency value in seconds
@@ -141,17 +125,14 @@ class MetricsCollector:
             value=latency,
             metric_kind="GAUGE",
             value_type="DOUBLE",
-            labels=labels
+            labels=labels,
         )
 
     def record_batch_size(
-        self,
-        name: str,
-        size: int,
-        labels: Optional[Dict[str, str]] = None
+        self, name: str, size: int, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Record a batch size metric.
-        
+
         Args:
             name: Metric name
             size: Batch size
@@ -162,39 +143,25 @@ class MetricsCollector:
             value=size,
             metric_kind="GAUGE",
             value_type="INT64",
-            labels=labels
+            labels=labels,
         )
 
-    def record_error(
-        self,
-        name: str,
-        labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def record_error(self, name: str, labels: Optional[Dict[str, str]] = None) -> None:
         """Record an error metric.
-        
+
         Args:
             name: Error metric name
             labels: Optional metric labels
         """
-        self.record_counter(
-            name=f"errors/{name}",
-            value=1,
-            labels=labels
-        )
+        self.record_counter(name=f"errors/{name}", value=1, labels=labels)
 
     def record_success(
-        self,
-        name: str,
-        labels: Optional[Dict[str, str]] = None
+        self, name: str, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Record a success metric.
-        
+
         Args:
             name: Success metric name
             labels: Optional metric labels
         """
-        self.record_counter(
-            name=f"successes/{name}",
-            value=1,
-            labels=labels
-        )
+        self.record_counter(name=f"successes/{name}", value=1, labels=labels)

@@ -14,7 +14,7 @@ def test_bigquery_client_initialization(test_config: Any) -> None:
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     assert client.project_id == test_config.project_id
@@ -24,15 +24,13 @@ def test_bigquery_client_initialization(test_config: Any) -> None:
 
 
 def test_insert_rows(
-    mock_bigquery_client: None,
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    mock_bigquery_client: None, test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test inserting rows into BigQuery."""
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     # Insert a single row
@@ -45,22 +43,20 @@ def test_insert_rows(
 
 
 def test_insert_multiple_rows(
-    mock_bigquery_client: None,
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    mock_bigquery_client: None, test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test inserting multiple rows into BigQuery."""
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     # Create multiple rows
     rows = [
         sample_message_data,
         dict(sample_message_data, event_id="test-event-456"),
-        dict(sample_message_data, event_id="test-event-789")
+        dict(sample_message_data, event_id="test-event-789"),
     ]
 
     # Insert multiple rows
@@ -72,15 +68,12 @@ def test_insert_multiple_rows(
     assert all(row in client.client.inserted_rows for row in rows)
 
 
-def test_query_data(
-    mock_bigquery_client: None,
-    test_config: Any
-) -> None:
+def test_query_data(mock_bigquery_client: None, test_config: Any) -> None:
     """Test querying data from BigQuery."""
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     # Execute a query
@@ -97,29 +90,23 @@ def test_query_data(
     assert isinstance(results, list)
 
 
-def test_table_exists(
-    mock_bigquery_client: None,
-    test_config: Any
-) -> None:
+def test_table_exists(mock_bigquery_client: None, test_config: Any) -> None:
     """Test checking if table exists."""
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     assert client.table_exists()
 
 
-def test_get_table_schema(
-    mock_bigquery_client: None,
-    test_config: Any
-) -> None:
+def test_get_table_schema(mock_bigquery_client: None, test_config: Any) -> None:
     """Test getting table schema."""
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     schema = client.get_table_schema()
@@ -128,15 +115,13 @@ def test_get_table_schema(
 
 
 def test_error_handling(
-    mock_bigquery_client: None,
-    test_config: Any,
-    sample_message_data: Dict[str, Any]
+    mock_bigquery_client: None, test_config: Any, sample_message_data: Dict[str, Any]
 ) -> None:
     """Test error handling in BigQuery operations."""
     client = BigQueryClient(
         project_id=test_config.project_id,
         dataset_id=test_config.dataset_id,
-        table_id=test_config.table_id
+        table_id=test_config.table_id,
     )
 
     # Test with invalid data

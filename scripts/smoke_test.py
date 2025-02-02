@@ -18,10 +18,10 @@ class SmokeTest:
         self,
         project_id: str,
         environment: str,
-        config_path: str = "config/deployment_config.yaml"
+        config_path: str = "config/deployment_config.yaml",
     ) -> None:
         """Initialize smoke test.
-        
+
         Args:
             project_id: GCP project ID
             environment: Test environment
@@ -30,67 +30,47 @@ class SmokeTest:
         self.project_id = project_id
         self.environment = environment
         self.config = PipelineConfig.from_yaml(config_path)[environment]
-        
+
         # Initialize clients
         self.publisher = pubsub_v1.PublisherClient()
         self.subscriber = pubsub_v1.SubscriberClient()
         self.bq_client = bigquery.Client(project=project_id)
 
-        self.topic_path = self.publisher.topic_path(
-            project_id,
-            self.config["topic_id"]
-        )
+        self.topic_path = self.publisher.topic_path(project_id, self.config["topic_id"])
 
     def _generate_test_message(self) -> Dict[str, Any]:
         """Generate a test message.
-        
+
         Returns:
             Test message dictionary
         """
         return {
             "event_id": f"smoke-test-{int(time.time())}",
             "timestamp": datetime.utcnow().isoformat(),
-            "data": {
-                "test_key": "test_value",
-                "environment": self.environment
-            },
-            "metadata": {
-                "source": "smoke_test",
-                "version": "1.0"
-            }
+            "data": {"test_key": "test_value", "environment": self.environment},
+            "metadata": {"source": "smoke_test", "version": "1.0"},
         }
 
-    def _publish_message(
-        self,
-        message: Dict[str, Any]
-    ) -> str:
+    def _publish_message(self, message: Dict[str, Any]) -> str:
         """Publish a test message.
-        
+
         Args:
             message: Message to publish
-            
+
         Returns:
             Message ID
         """
         data = json.dumps(message).encode("utf-8")
-        future = self.publisher.publish(
-            self.topic_path,
-            data=data,
-            origin="smoke_test"
-        )
+        future = self.publisher.publish(self.topic_path, data=data, origin="smoke_test")
         return future.result()
 
-    def _verify_bigquery(
-        self,
-        message: Dict[str, Any],
-        timeout: int = 300
-    ) -> bool:
+    def _verify_bigquery(self, message: Dict[str, Any], timeout: int = 300) -> bool:
         """Verify message in BigQuery.
-        
+
         Args:
             message: Published message
             timeout: Timeout in seconds
-            
+
         Returns:
             True if verification successful
         """
@@ -104,16 +84,16 @@ class SmokeTest:
         while time.time() - start_time < timeout:
             query_job = self.bq_client.query(query)
             results = list(query_job.result())
-            
+
             if results:
                 row = results[0]
                 return (
                     row.event_id == message["event_id"]
                     and row.data["test_key"] == message["data"]["test_key"]
                 )
-            
+
             time.sleep(10)
-        
+
         return False
 
     def run(self) -> None:
@@ -138,28 +118,24 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run smoke tests for Real-Time Data Pipeline"
     )
-    parser.add_argument(
-        "--project-id",
-        required=True,
-        help="GCP project ID"
-    )
+    parser.add_argument("--project-id", required=True, help="GCP project ID")
     parser.add_argument(
         "--environment",
         choices=["staging", "production"],
         required=True,
-        help="Test environment"
+        help="Test environment",
     )
     parser.add_argument(
         "--config",
         default="config/deployment_config.yaml",
-        help="Path to deployment configuration"
+        help="Path to deployment configuration",
     )
     args = parser.parse_args()
 
     smoke_test = SmokeTest(
         project_id=args.project_id,
         environment=args.environment,
-        config_path=args.config
+        config_path=args.config,
     )
     smoke_test.run()
 

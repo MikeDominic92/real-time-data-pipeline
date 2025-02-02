@@ -33,14 +33,10 @@ class PerformanceTestRunner:
     """Run performance tests for the Real-Time Data Pipeline."""
 
     def __init__(
-        self,
-        project_id: str,
-        topic_id: str,
-        dataset_id: str,
-        table_id: str
+        self, project_id: str, topic_id: str, dataset_id: str, table_id: str
     ) -> None:
         """Initialize test runner.
-        
+
         Args:
             project_id: GCP project ID
             topic_id: Pub/Sub topic ID
@@ -51,20 +47,17 @@ class PerformanceTestRunner:
         self.topic_id = topic_id
         self.dataset_id = dataset_id
         self.table_id = table_id
-        
+
         # Initialize clients
         self.metrics = MetricsCollector(
-            project_id=project_id,
-            metric_prefix="custom.googleapis.com/rtdp/perf"
+            project_id=project_id, metric_prefix="custom.googleapis.com/rtdp/perf"
         )
         self.monitoring_client = monitoring_v3.MetricServiceClient()
         self.bq_client = bigquery.Client(project=project_id)
-        
+
         # Initialize load generator
         self.load_generator = LoadGenerator(
-            project_id=project_id,
-            topic_id=topic_id,
-            metrics_collector=self.metrics
+            project_id=project_id, topic_id=topic_id, metrics_collector=self.metrics
         )
 
     def _get_metric_stats(
@@ -72,16 +65,16 @@ class PerformanceTestRunner:
         metric_type: str,
         start_time: datetime,
         end_time: datetime,
-        percentiles: Optional[List[float]] = None
+        percentiles: Optional[List[float]] = None,
     ) -> Tuple[float, Dict[float, float]]:
         """Get metric statistics from Cloud Monitoring.
-        
+
         Args:
             metric_type: Type of metric to query
             start_time: Start time
             end_time: End time
             percentiles: Optional percentiles to calculate
-            
+
         Returns:
             Tuple of (average, percentiles dict)
         """
@@ -98,7 +91,7 @@ class PerformanceTestRunner:
                 "name": project_name,
                 "filter": f'metric.type = "{metric_type}"',
                 "interval": interval,
-                "view": monitoring_v3.ListTimeSeriesRequest.TimeSeriesView.FULL
+                "view": monitoring_v3.ListTimeSeriesRequest.TimeSeriesView.FULL,
             }
         )
 
@@ -112,7 +105,7 @@ class PerformanceTestRunner:
 
         avg = sum(values) / len(values)
         percentile_values = {}
-        
+
         if percentiles:
             sorted_values = sorted(values)
             for p in percentiles:
@@ -122,18 +115,15 @@ class PerformanceTestRunner:
         return avg, percentile_values
 
     def _get_message_counts(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        batch_id: Optional[str] = None
+        self, start_time: datetime, end_time: datetime, batch_id: Optional[str] = None
     ) -> Tuple[int, int]:
         """Get message counts from BigQuery.
-        
+
         Args:
             start_time: Start time
             end_time: End time
             batch_id: Optional batch ID to filter
-            
+
         Returns:
             Tuple of (messages sent, messages processed)
         """
@@ -157,26 +147,14 @@ class PerformanceTestRunner:
 
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ScalarQueryParameter(
-                    "start_time",
-                    "TIMESTAMP",
-                    start_time
-                ),
-                bigquery.ScalarQueryParameter(
-                    "end_time",
-                    "TIMESTAMP",
-                    end_time
-                )
+                bigquery.ScalarQueryParameter("start_time", "TIMESTAMP", start_time),
+                bigquery.ScalarQueryParameter("end_time", "TIMESTAMP", end_time),
             ]
         )
-        
+
         if batch_id:
             job_config.query_parameters.append(
-                bigquery.ScalarQueryParameter(
-                    "batch_id",
-                    "STRING",
-                    batch_id
-                )
+                bigquery.ScalarQueryParameter("batch_id", "STRING", batch_id)
             )
 
         results = self.bq_client.query(query, job_config=job_config).result()
@@ -184,26 +162,23 @@ class PerformanceTestRunner:
         return row.sent, row.processed
 
     def run_constant_load_test(
-        self,
-        messages_per_second: int,
-        duration_seconds: int
+        self, messages_per_second: int, duration_seconds: int
     ) -> TestResult:
         """Run constant load test.
-        
+
         Args:
             messages_per_second: Number of messages per second
             duration_seconds: Test duration in seconds
-            
+
         Returns:
             Test results
         """
         test_name = f"constant_load_{messages_per_second}mps"
         start_time = datetime.utcnow()
-        
+
         try:
             self.load_generator.generate_constant_load(
-                messages_per_second,
-                duration_seconds
+                messages_per_second, duration_seconds
             )
         finally:
             self.load_generator.stop()
@@ -218,18 +193,15 @@ class PerformanceTestRunner:
             "custom.googleapis.com/rtdp/processing_latency",
             start_time,
             end_time,
-            [0.5, 0.95, 0.99]
+            [0.5, 0.95, 0.99],
         )
 
         messages_sent, messages_processed = self._get_message_counts(
-            start_time,
-            end_time
+            start_time, end_time
         )
 
         errors = self._get_metric_stats(
-            "custom.googleapis.com/rtdp/errors",
-            start_time,
-            end_time
+            "custom.googleapis.com/rtdp/errors", start_time, end_time
         )[0]
 
         test_duration = (end_time - start_time).total_seconds()
@@ -246,36 +218,29 @@ class PerformanceTestRunner:
             p95_latency=percentiles[0.95],
             p99_latency=percentiles[0.99],
             errors=int(errors),
-            throughput=throughput
+            throughput=throughput,
         )
 
     def run_increasing_load_test(
-        self,
-        initial_rate: int,
-        final_rate: int,
-        step_size: int,
-        step_duration: int
+        self, initial_rate: int, final_rate: int, step_size: int, step_duration: int
     ) -> List[TestResult]:
         """Run increasing load test.
-        
+
         Args:
             initial_rate: Initial messages per second
             final_rate: Final messages per second
             step_size: Rate increase per step
             step_duration: Duration of each step in seconds
-            
+
         Returns:
             List of test results
         """
         results = []
         current_rate = initial_rate
-        
+
         try:
             while current_rate <= final_rate:
-                result = self.run_constant_load_test(
-                    current_rate,
-                    step_duration
-                )
+                result = self.run_constant_load_test(current_rate, step_duration)
                 results.append(result)
                 current_rate += step_size
         finally:
@@ -284,33 +249,26 @@ class PerformanceTestRunner:
         return results
 
     def run_burst_load_test(
-        self,
-        burst_size: int,
-        burst_duration: int,
-        rest_duration: int,
-        num_bursts: int
+        self, burst_size: int, burst_duration: int, rest_duration: int, num_bursts: int
     ) -> List[TestResult]:
         """Run burst load test.
-        
+
         Args:
             burst_size: Messages per second during burst
             burst_duration: Duration of each burst in seconds
             rest_duration: Duration of rest between bursts
             num_bursts: Number of bursts to generate
-            
+
         Returns:
             List of test results
         """
         results = []
-        
+
         try:
             for i in range(num_bursts):
-                result = self.run_constant_load_test(
-                    burst_size,
-                    burst_duration
-                )
+                result = self.run_constant_load_test(burst_size, burst_duration)
                 results.append(result)
-                
+
                 if i < num_bursts - 1:
                     time.sleep(rest_duration)
         finally:
@@ -318,32 +276,30 @@ class PerformanceTestRunner:
 
         return results
 
-    def save_results(
-        self,
-        results: List[TestResult],
-        output_file: str
-    ) -> None:
+    def save_results(self, results: List[TestResult], output_file: str) -> None:
         """Save test results to file.
-        
+
         Args:
             results: Test results to save
             output_file: Output file path
         """
         output = []
         for result in results:
-            output.append({
-                "test_name": result.test_name,
-                "start_time": result.start_time.isoformat(),
-                "end_time": result.end_time.isoformat(),
-                "messages_sent": result.messages_sent,
-                "messages_processed": result.messages_processed,
-                "avg_latency": result.avg_latency,
-                "p50_latency": result.p50_latency,
-                "p95_latency": result.p95_latency,
-                "p99_latency": result.p99_latency,
-                "errors": result.errors,
-                "throughput": result.throughput
-            })
+            output.append(
+                {
+                    "test_name": result.test_name,
+                    "start_time": result.start_time.isoformat(),
+                    "end_time": result.end_time.isoformat(),
+                    "messages_sent": result.messages_sent,
+                    "messages_processed": result.messages_processed,
+                    "avg_latency": result.avg_latency,
+                    "p50_latency": result.p50_latency,
+                    "p95_latency": result.p95_latency,
+                    "p99_latency": result.p99_latency,
+                    "errors": result.errors,
+                    "throughput": result.throughput,
+                }
+            )
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(output, f, indent=2)
